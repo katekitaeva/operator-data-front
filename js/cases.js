@@ -132,6 +132,7 @@ export function buildCaseCard() {
     status: val("status").trim(),
     clientContext,
     verdict: verdict(),
+    actions: state.actions || null,
     outcome: {
       check: val("out-check").trim(),
       reply: val("out-reply").trim(),
@@ -257,6 +258,11 @@ export function loadCaseIntoForm(card, file) {
       note: t.note || ""
     };
   });
+
+  // Действия чеклиста
+  if (Array.isArray(card.actions)) {
+    state.actions = card.actions;
+  }
 
   // Запоминаем идентификатор загруженного кейса
   state.loadedCase = {

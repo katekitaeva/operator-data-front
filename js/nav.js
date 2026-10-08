@@ -8,7 +8,7 @@ import { updateCrmBar } from "./crm.js";
 const STEP_LABELS = [
   "Суть",
   "Темы",
-  "Инструкции & правила",
+  "Правила",
   "Действия",
   "Запись"
 ];
@@ -38,6 +38,14 @@ export function renderProgress() {
     labelSpan.textContent = STEP_LABELS[i - 1] || ("Шаг " + i);
 
     btn.append(numSpan, labelSpan);
+
+    if (i === 3) {
+      const wipSpan = document.createElement("span");
+      wipSpan.className = "step-nav-wip-badge";
+      wipSpan.textContent = "WIP";
+      wipSpan.title = "В разработке";
+      btn.append(wipSpan);
+    }
     btn.addEventListener("click", () => goTo(i));
     nav.appendChild(btn);
   }

@@ -38,12 +38,15 @@ export function renderPreview() {
     ["Тикет", card.ticket || "—"],
     ["Заказ", card.order || "—"],
     ["ID клиента", card.clientId || "не определён (нет в ссылке CRM)"],
-    ["Темы", card.themes.length ? card.themes.map(t => `${t.path} (${t.status})`).join("<br>") : "не выбраны"],
+    ["Темы", card.themes.length ? card.themes.map((t, i) => `${i + 1}. ${t.path} <strong>[${t.status}]</strong>`).join("<br>") : "не выбраны"],
     ["Суть проблемы", card.problem || "—"],
     ["Требование", card.demand || "—"],
+    ["Вердикт Памятки", card.verdict ? card.verdict.split("\n")[0] : "—"],
+    ...(card.outcome && card.outcome.check ? [["Чек-лист исполнения", card.outcome.check.replace(/\n/g, "<br>")]] : []),
+    ...(card.outcome && card.outcome.reply ? [["Ответ клиенту", card.outcome.reply.replace(/\n/g, "<br>")]] : []),
+    ...(card.outcome && card.outcome.comment ? [["Комментарий в тикет", card.outcome.comment.replace(/\n/g, "<br>")]] : []),
     ["Что сработало", card.whatWorked || "—"],
-    ["Комментарии QC", card.qcComments || "—"],
-    ["Вердикт Памятки", card.verdict ? card.verdict.split("\n")[0] : "—"]
+    ["Комментарии QC", card.qcComments || "—"]
   ];
 
   rows.forEach(([k, v]) => {

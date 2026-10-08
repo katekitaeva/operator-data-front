@@ -44,6 +44,7 @@ export function resetClaimForm() {
 
   state.current = 1;
   state.themes = [];
+  state.actions = null;
   state.caseSaved = false;
   state.loadedCase = null;
 

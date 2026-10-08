@@ -100,14 +100,18 @@ export function renderVerdict() {
 
   const bAcc = $("badge-acc");
   if (bAcc) {
-    bAcc.textContent = accOk ? "В норме" : "Вне нормы";
-    bAcc.className = "norm-badge" + (accOk ? "" : " bad");
+    bAcc.textContent = accOk ? "✓" : "!";
+    bAcc.title = accOk ? "В норме (до 3 начислений)" : "Выше нормы (более 3 начислений)";
+    bAcc.setAttribute("aria-label", accOk ? "В норме" : "Выше нормы");
+    bAcc.className = "norm-badge " + (accOk ? "ok" : "bad");
   }
 
   const bCan = $("badge-cancels");
   if (bCan) {
-    bCan.textContent = cancelsOk ? "В норме" : "Вне нормы";
-    bCan.className = "norm-badge" + (cancelsOk ? "" : " bad");
+    bCan.textContent = cancelsOk ? "✓" : "!";
+    bCan.title = cancelsOk ? "В норме (до 50% отмен)" : "Выше нормы (более 50% отмен)";
+    bCan.setAttribute("aria-label", cancelsOk ? "В норме" : "Выше нормы");
+    bCan.className = "norm-badge " + (cancelsOk ? "ok" : "bad");
   }
 
   // Обновление верхних бейджей вердикта
@@ -159,13 +163,17 @@ export function buildAssembledPrompt() {
   const dtVal = $("case-datetime")?.value || $("helper-datetime")?.value || currentLocalDatetime();
   const readableDt = dtVal.replace("T", " ");
   const ticketVal = ($("helper-ticket")?.value || $("ticket")?.value || "").trim() || "не указан";
-  const clientUrlVal = ($("helper-client-url")?.value || $("client-url")?.value || "").trim() || "не указан";
+  const clientInputVal = ($("helper-client-url")?.value || $("client-url")?.value || "").trim();
+  const clientRef = parseClientUrl(clientInputVal);
+  const clientIdVal = (clientRef && clientRef.clientId) || (clientInputVal && !clientInputVal.startsWith("http") ? clientInputVal : "не указан");
+  const clientUrlVal = (clientRef && clientRef.clientId && clientRef.origin ? `${clientRef.origin}/clients/${clientRef.clientId}` : (clientInputVal || "не указан"));
   const chatVal = ($("helper-chat")?.value || "").trim() || "[Вставьте сюда текст переписки из WebCRM]";
   const loyaltyText = buildLoyaltyContextText();
 
   return promptTemplate
     .replace("{{DATETIME}}", readableDt)
     .replace("{{TICKET}}", ticketVal)
+    .replace("{{CLIENT_ID}}", clientIdVal)
     .replace("{{CLIENT_URL}}", clientUrlVal)
     .replace("{{LOYALTY_CONTEXT}}", loyaltyText)
     .replace("{{CHAT}}", chatVal);

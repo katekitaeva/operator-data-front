@@ -3,7 +3,7 @@
 
 import { FIELDS, CHECKS, STORAGE_KEY } from "./config.js";
 
-export const state = { current: 1, themes: [], caseSaved: false, loadedCase: null };
+export const state = { current: 1, themes: [], caseSaved: false, loadedCase: null, actions: null };
 
 export function save() {
   try {
@@ -12,6 +12,7 @@ export function save() {
       themes: state.themes,
       caseSaved: !!state.caseSaved,
       loadedCase: state.loadedCase || null,
+      actions: state.actions || null,
       checks: {}
     };
     CHECKS.forEach(c => { const el = document.getElementById(c); if (el) data.checks[c] = el.checked; });
@@ -29,6 +30,7 @@ export function load() {
     state.themes = data.themes || [];
     state.caseSaved = !!data.caseSaved;
     state.loadedCase = data.loadedCase || null;
+    state.actions = data.actions || null;
     CHECKS.forEach(c => { const el = document.getElementById(c); if (el && data.checks && data.checks[c]) el.checked = true; });
   } catch (e) { console.warn("load():", e); }
 }
