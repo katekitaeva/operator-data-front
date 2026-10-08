@@ -4,7 +4,7 @@ import { $ } from "./ui.js";
 import { conn, ghGet } from "./github.js";
 import { loadCaseIntoForm } from "./cases.js";
 import { renderThemes, renderSummary } from "./steps/step2.js";
-import { renderVerdict } from "./steps/step3.js";
+import { renderVerdict } from "./steps/step1.js";
 import { renderPreview } from "./steps/step5.js";
 import { updateClientUrlMsg } from "./steps/step1.js";
 import { updPh } from "./steps/step4.js";

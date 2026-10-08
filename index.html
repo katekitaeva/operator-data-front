@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Проводник по претензии</title>
+<meta name="description" content="Инструмент для разбора претензий клиентов, работы с базой знаний и архивом кейсов поддержки.">
+<meta property="og:title" content="Проводник по претензии">
+<meta property="og:description" content="Инструмент для разбора претензий клиентов, работы с базой знаний и архивом кейсов поддержки.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,6 91,29 50,52 9,29' fill='%237ee0e8'/%3E%3Cpolygon points='9,29 50,52 50,95 9,72' fill='%2310a3b2'/%3E%3Cpolygon points='91,29 50,52 50,95 91,72' fill='%230a7482'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/hero.css">
@@ -16,7 +19,7 @@
   <div class="settings-panel" id="conn"><h3>Подключение к GitHub</h3>
     <p>Токен хранится только в этом браузере (localStorage) и никогда не попадает в код страницы или в репозиторий. На новом устройстве введите его заново. Нужен fine-grained personal access token с правом Contents: Read and write для репозитория с данными.</p>
     <div class="settings-grid">
-      <div><label for="c-owner">Владелец (логин GitHub)</label><input type="text" id="c-owner" autocomplete="off" placeholder="katekitaeva"></div>
+      <div><label for="c-owner">Владелец (логин GitHub)</label><input type="text" id="c-owner" value="katekitaeva" autocomplete="off" placeholder="katekitaeva"></div>
       <div><label for="c-repo">Репозиторий</label><input type="text" id="c-repo" value="operator-data" autocomplete="off"></div>
       <div><label for="c-branch">Ветка</label><input type="text" id="c-branch" value="main" autocomplete="off"></div><div></div>
       <div class="settings-full"><label for="c-token">Токен (Fine-grained, Contents: Read and write)</label><input type="password" id="c-token" autocomplete="off" placeholder="github_pat_..."></div>
@@ -30,42 +33,130 @@
     <div class="crm-bar-links" id="crm-bar-links"></div>
   </nav>
 
-  <div class="progress" id="progress" aria-hidden="true"></div>
+  <nav class="step-nav" id="step-nav" aria-label="Шаги разбора претензии"></nav>
 
-  <!-- ШАГ 1 -->
+  <!-- ШАГ 1: Суть и контекст -->
   <section class="step" id="step-1">
-    <h2><button type="button" class="linkbtn" data-n="1">Шаг 1. Прочитать претензию<span class="backicon"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-back"/></svg></span></button></h2>
-    <p class="task">Прочитайте претензию и заполните поля ниже.</p>
+    <div class="phase-card">
+      <div class="phase-card-left">
+        <div class="phase-card-icon">
+          <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>
+        </div>
+        <div class="phase-card-text">
+          <h2 class="phase-card-title">Фаза 1: Понять проблему и оценить контекст</h2>
+          <p class="phase-card-desc">Вставьте HTML переписки или текст тикета. Очиститель обезличит данные (номера телефонов, e-mail), а блок «Памятка» автоматически рассчитает допустимый лимит компенсации и тактику.</p>
+        </div>
+      </div>
+      <a href="https://customer-support-help.o3t.ru/instrukcii-vydelennyh-grupp/instrukciya-dlya-vydelennoi-gruppy-loyalty-team/problemy-i-resheniya/pamyatka" target="_blank" rel="noopener noreferrer" class="phase-card-btn">
+        <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-clip"/></svg>
+        Открыть «Памятку»
+      </a>
+    </div>
 
+    <!-- Помощник DeepSeek: разобрать чат с клиентом -->
     <details class="helper" id="helper" open>
       <summary><svg class="ds" aria-hidden="true" focusable="false"><use href="assets/icons.svg#ic-deepseek"/></svg><span>Помощник DeepSeek: разобрать чат с клиентом</span></summary>
       <div class="body">
-        <p class="hint" style="margin-top:0">Вставьте слепок чата с клиентом из CRM, укажите номер тикета и адрес карточки клиента, затем нажмите кнопку «Собрать промт step001 и скопировать» и отправьте собранный промт в <a href="https://chat.deepseek.com/" target="_blank" rel="noopener">DeepSeek</a>.</p>
+        <p class="hint" style="margin-top:0">Заполните данные по клиенту и тикету, вставьте слепок чата из WebCRM. Нажмите «Собрать промт step001 и скопировать», отправьте в <a href="https://chat.deepseek.com/" target="_blank" rel="noopener">DeepSeek</a>, затем вставьте ответ нейросети в поле ниже.</p>
         
-        <div class="helper-inputs-grid">
-          <div>
-            <label for="helper-datetime">Дата и время диалога (опорная точка)
+        <!-- Подблок 1: Идентификаторы -->
+        <div class="helper-subblock">
+          <div class="helper-subblock-title">
+            <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>
+            Опорные данные обращения
+          </div>
+          <div class="helper-inputs-grid">
+            <div>
+              <label for="helper-datetime">Дата и время диалога (опорная точка)</label>
               <div class="input-with-btn">
                 <input type="datetime-local" id="helper-datetime">
                 <button class="next small" id="btn-helper-now" type="button" title="Установить текущее время">Сейчас</button>
               </div>
-            </label>
+            </div>
+            <div>
+              <label for="helper-ticket">Номер вашего тикета 🎫</label>
+              <input type="text" id="helper-ticket" placeholder="Например: 753683844" autocomplete="off">
+            </div>
+            <div class="full-width">
+              <label for="helper-client-url">Адрес карточки клиента в CRM (или ID клиента) 👤</label>
+              <input type="text" id="helper-client-url" placeholder="https://crm.o3team.ru/clients/aynapnnk" autocomplete="off">
+            </div>
           </div>
-          <div>
-            <label for="helper-ticket">Номер вашего тикета
-              <input type="text" id="helper-ticket" placeholder="Например: 746899721" autocomplete="off">
-            </label>
+        </div>
+
+        <!-- Подблок 2: Контекст клиента по Loyalty -->
+        <div class="helper-subblock">
+          <div class="helper-subblock-title">
+            <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>
+            Контекст клиента по «Памятке» Loyalty (вкладки «Профиль», «Заказы», «Коммуникации»)
           </div>
-          <div class="full-width">
-            <label for="helper-client-url">Адрес карточки клиента в CRM
-              <input type="url" id="helper-client-url" placeholder="https://crm.o3team.ru/clients/nbvtyqap" autocomplete="off">
-            </label>
+
+          <div class="loyalty-metrics-grid">
+            <div class="loyalty-metric-card">
+              <div class="loyalty-metric-label">Стоимость заказа, ₽</div>
+              <input type="number" id="c-sum" placeholder="0" autocomplete="off" value="0">
+            </div>
+            <div class="loyalty-metric-card">
+              <div class="loyalty-metric-head">
+                <span class="loyalty-metric-label">Начисления (2 мес)</span>
+                <span class="norm-badge" id="badge-acc">В норме</span>
+              </div>
+              <input type="number" id="c-acc" placeholder="0" autocomplete="off" value="0" title="Норма до 3 начислений">
+            </div>
+            <div class="loyalty-metric-card">
+              <div class="loyalty-metric-label">Заказов всего</div>
+              <input type="number" id="c-orders" placeholder="0" autocomplete="off" value="0">
+            </div>
+            <div class="loyalty-metric-card">
+              <div class="loyalty-metric-label">Отменено всего</div>
+              <input type="number" id="c-cancels" placeholder="0" autocomplete="off" value="0">
+            </div>
+            <div class="loyalty-metric-card">
+              <div class="loyalty-metric-head">
+                <span class="loyalty-metric-label">Отмены, % (расчёт)</span>
+                <span class="norm-badge" id="badge-cancels">В норме</span>
+              </div>
+              <div class="loyalty-metric-calc-val" id="calc-cancels-pct">0%</div>
+            </div>
           </div>
-          <div class="full-width">
-            <label for="helper-chat">Слепок чата с клиентом из CRM (включая сообщения бота и шум)
-              <textarea id="helper-chat" rows="6" placeholder="Вставьте сюда скопированный текст переписки из WebCRM..."></textarea>
-            </label>
+
+          <div class="loyalty-status-row">
+            <div class="loyalty-status-group">
+              <div class="fieldlabel" style="font-weight:600;font-size:13px;margin-bottom:4px;">Статус и доходность клиента</div>
+              <div class="status-btn-group" id="status-btn-group">
+                <button type="button" class="status-btn active" data-val="Обычный">👤 Обычный</button>
+                <button type="button" class="status-btn" data-val="Премиум">⭐ Премиум</button>
+                <button type="button" class="status-btn" data-val="Ультра">💎 Ультра</button>
+                <button type="button" class="status-btn" data-val="Медийный">👑 Медийный</button>
+              </div>
+              <input type="hidden" id="c-status" value="Обычный">
+            </div>
+
+            <div class="loyalty-crit-group">
+              <div class="fieldlabel" style="font-weight:600;font-size:13px;margin-bottom:6px;">Критичность ситуации (триггеры из Памятки)</div>
+              <label class="chk"><input type="checkbox" id="k1"> 🍼 Мамочки / люди с ОВЗ / медийные личности</label>
+              <label class="chk"><input type="checkbox" id="k2"> 🤝 Заказ для гуманитарной помощи / благотворительности</label>
+            </div>
           </div>
+
+          <div class="loyalty-labels-card" style="margin-bottom:0">
+            <div class="loyalty-labels-head">Метки клиента в CRM (негативные метки исключают стандартную компенсацию):</div>
+            <div class="loyalty-labels-grid">
+              <label class="chk"><input type="checkbox" id="l1"> ⚠️ «фрод: злоупотребляет»</label>
+              <label class="chk"><input type="checkbox" id="l2"> 🤬 «хамит, ругается»</label>
+              <label class="chk"><input type="checkbox" id="l3"> 🚫 «бан купонов»</label>
+              <label class="chk"><input type="checkbox" id="l4"> 💬 «комментарии от др. подразделений»</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Подблок 3: Слепок чата -->
+        <div class="helper-subblock">
+          <div class="helper-subblock-title">
+            <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-clip"/></svg>
+            Слепок чата с клиентом из CRM (включая сообщения бота и шум)
+          </div>
+          <textarea id="helper-chat" rows="6" placeholder="Вставьте сюда скопированный текст переписки из WebCRM..."></textarea>
         </div>
 
         <div class="helper-actions">
@@ -81,86 +172,168 @@
           <pre id="prompt-text"></pre>
         </details>
 
-        <label style="margin-top:14px">Ответ DeepSeek
+        <label style="margin-top:14px;font-weight:600;">Ответ DeepSeek
           <textarea id="answer" placeholder="Вставьте сюда ответ DeepSeek (ЗАКАЗ: ..., ПРОБЛЕМА: ..., ТРЕБОВАНИЕ: ...)"></textarea>
         </label>
-        <button class="next" id="parse" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>Разобрать ответ и заполнить поля</button>
+        <button class="next pri" id="parse" type="button" style="margin-top:10px;">
+          <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>
+          Разобрать ответ и заполнить поля
+        </button>
       </div>
     </details>
     <p class="hint msg" id="parse-msg" role="status"></p>
 
-    <div class="fields">
-      <div>
-        <label for="case-datetime">Дата и время обращения (таймштамп кейса)
-          <div class="input-with-btn">
-            <input type="datetime-local" id="case-datetime">
-            <button class="next small" id="btn-case-now" type="button" title="Установить текущее время">Сейчас</button>
+    <!-- ИТОГОВАЯ ФОРМА ШАГА 1 (четкое деление на структурированные блоки) -->
+    <div class="fields" id="step1-form-blocks">
+      
+      <!-- Блок 1: Основные идентификаторы кейса -->
+      <div class="form-block">
+        <div class="form-block-head">
+          <h3 class="form-block-title">
+            <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-clip"/></svg>
+            Основные идентификаторы обращения
+          </h3>
+          <span class="form-block-badge">WebCRM Ozon</span>
+        </div>
+        <div class="step1-row1">
+          <div>
+            <label for="ticket">Номер тикета / задачи</label>
+            <input type="text" id="ticket" autocomplete="off" placeholder="например: 753683844">
           </div>
-        </label>
+          <div>
+            <label for="order">Номер заказа Ozon</label>
+            <input type="text" id="order" autocomplete="off" placeholder="например: 75178110-0042">
+          </div>
+          <div>
+            <label for="client-url">ID клиента (в CRM)</label>
+            <input type="text" id="client-url" autocomplete="off" placeholder="например: aynapnnk">
+          </div>
+        </div>
+        <p class="hint msg" id="client-url-msg" role="status" style="margin:8px 0 0;"></p>
       </div>
-      <label>Номер вашего тикета
-        <input type="text" id="ticket" autocomplete="off">
-      </label>
-      <label>Номер заказа
-        <input type="text" id="order" autocomplete="off">
-      </label>
-      <label>Адрес карточки клиента в CRM (по нему строятся ссылки на тикет и заказ)
-        <input type="url" id="client-url" autocomplete="off" placeholder="https://crm.o3team.ru/clients/…">
-      </label>
-      <p class="hint msg" id="client-url-msg" role="status"></p>
-      <label>Суть проблемы клиента
-        <textarea id="problem"></textarea>
-      </label>
-      <label>Что требует клиент (одно предложение)
-        <textarea id="demand"></textarea>
-      </label>
-      <label>Требование менялось позже?
-        <input type="text" id="changed" autocomplete="off">
-      </label>
-      <label>Юридические упоминания
-        <input type="text" id="legal" autocomplete="off">
-      </label>
-      <label>Контакты: кто уже общался с клиентом
-        <textarea id="contacts"></textarea>
-      </label>
-      <label>Задачи из чата
-        <textarea id="tasks"></textarea>
-      </label>
+
+      <!-- Блок 2: Фактическая суть претензии -->
+      <div class="form-block">
+        <div class="form-block-head">
+          <h3 class="form-block-title">
+            <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>
+            Суть проблемы и требование клиента
+          </h3>
+          <span class="form-block-badge">Основа решения</span>
+        </div>
+        <div class="step1-row2">
+          <div>
+            <label for="problem">Суть проблемы (хронология, факты без домыслов)</label>
+            <textarea id="problem" rows="4" placeholder="Опишите фактическую ситуацию: что заказано, что пошло не так, кто виноват..."></textarea>
+          </div>
+          <div>
+            <label for="demand">Требование клиента (чего конкретно добивается)</label>
+            <textarea id="demand" rows="4" placeholder="Чего требует клиент: возврат денег, доставка в срок, неустойка, замена товара..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Блок 3: Контекст Loyalty и расчет по Памятке -->
+      <div class="form-block">
+        <div class="form-block-head">
+          <h3 class="form-block-title">
+            <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>
+            Профиль клиента и вердикт по «Памятке» Loyalty
+          </h3>
+          <span class="form-block-badge">Авторасчёт лимита</span>
+        </div>
+
+        <div class="verdict-box" id="verdict-box" style="margin-top:0;">
+          <div class="verdict-top-bar">
+            <div class="verdict-badges" id="verdict-badges">
+              <span class="vbadge ok" id="vbadge-crit">✔ Некритичная ситуация</span>
+              <span class="vbadge ok" id="vbadge-norm">✔ Клиент в норме</span>
+            </div>
+            <button type="button" class="next small" id="copy-verdict-btn" style="padding:5px 12px;font-size:12.5px;">
+              <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-clip"/></svg>
+              Копировать вердикт
+            </button>
+          </div>
+          <pre id="verdict" class="verdict-pre"></pre>
+        </div>
+      </div>
+
+      <!-- Блок 4: Дополнительные детали из чата -->
+      <details class="form-block inner" style="padding:14px 18px;">
+        <summary style="font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;color:var(--ink);">
+          <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-clip"/></svg>
+          Дополнительные детали из чата (опорное время, юр. статус, контакты, задачи)
+        </summary>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;">
+          <div>
+            <label for="case-datetime">Дата и время обращения</label>
+            <div class="input-with-btn">
+              <input type="datetime-local" id="case-datetime">
+              <button class="next small" id="btn-case-now" type="button" title="Установить текущее время">Сейчас</button>
+            </div>
+          </div>
+          <div>
+            <label for="changed">Требование менялось позже?</label>
+            <input type="text" id="changed" autocomplete="off" placeholder="нет">
+          </div>
+          <div>
+            <label for="legal">Юридические упоминания</label>
+            <input type="text" id="legal" autocomplete="off" placeholder="нет">
+          </div>
+          <div>
+            <label for="contacts">Контакты: кто общался с клиентом</label>
+            <textarea id="contacts" rows="2" placeholder="Оператор / специалист"></textarea>
+          </div>
+          <div style="grid-column:1/-1;">
+            <label for="tasks">Задачи из чата</label>
+            <textarea id="tasks" rows="2" placeholder="Номера CTASK..."></textarea>
+          </div>
+        </div>
+      </details>
     </div>
 
-    <div class="actions">
+    <div class="actions" style="margin-top:20px;">
       <p class="error" id="err-1" role="alert"></p>
-      <button class="next" id="next-1" type="button">Далее к блоку «Что произошло»<svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-next"/></svg></button>
+      <button class="next pri" id="next-1" type="button" style="width:100%;justify-content:center;padding:14px 20px;font-size:15px;background:#1668e3;">
+        Далее: Выбор тем обращения (148 тем)
+        <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-next"/></svg>
+      </button>
     </div>
   </section>
 
-  <!-- ШАГ 2 -->
+  <!-- ШАГ 2: Темы обращения -->
   <section class="step" id="step-2" hidden>
-    <h2><button type="button" class="linkbtn" data-n="2">Шаг 2. Что произошло<span class="backicon"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-back"/></svg></span></button></h2>
-    <div class="sumcard"><div class="sumtitle">Сводка шага 1 (нажмите на значение, чтобы скопировать)</div><div id="sum-card"></div></div>
-    <p class="task">Восстановите ход событий и определите темы обращения.</p>
+    <div class="phase-card">
+      <div class="phase-card-left">
+        <div class="phase-card-icon">
+          <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>
+        </div>
+        <div class="phase-card-text">
+          <h2 class="phase-card-title">Фаза 2: Таксономия тем обращений (claim-types)</h2>
+          <p class="phase-card-desc">Выберите точные темы из официального справочника WebCRM Ozon. Они будут добавлены в чек-лист действий (шаг 4) и зафиксированы в статистике кейса.</p>
+        </div>
+      </div>
+      <a href="https://customer-support-help.o3t.ru/instrukcii-i-procedury/vybor-kategorii-obrashcheniya-i-rezolucii/tablica-tem-obrashchenii-pokupatelei-new" target="_blank" rel="noopener noreferrer" class="phase-card-btn">
+        <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-book"/></svg>
+        Правила выбора тем
+      </a>
+    </div>
 
     <details class="helper" id="helper2" open>
-      <summary><svg class="ds" aria-hidden="true" focusable="false"><use href="assets/icons.svg#ic-deepseek"/></svg><span>Помощник DeepSeek: хронология, статус, темы</span></summary>
+      <summary><svg class="ds" aria-hidden="true" focusable="false"><use href="assets/icons.svg#ic-deepseek"/></svg><span>Помощник DeepSeek: темы</span></summary>
       <div class="body">
-        <p class="hint">Вставьте промт в тот же чат DeepSeek, где вы разбирали претензию на шаге 1. Текст чата заново вставлять не нужно. DeepSeek сначала спросит, проставлены ли в тикете уже какие-то темы: ответьте ему, перечислив их, или напишите «нет».</p>
+        <p class="hint">Вставьте промт в тот же чат DeepSeek, где вы разбирали претензию на шаге 1. Текст чата заново вставлять не нужно. DeepSeek подберёт точные темы обращения по таксономии Ozon.</p>
         <p><button class="next small" id="copy-prompt2" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-clip"/></svg>Скопировать промт step002</button> <span class="hint" id="prompt2-state" role="status"></span></p>
         <details class="inner"><summary>Показать текст промта</summary><pre id="prompt2-text"></pre></details>
         <label style="margin-top:14px">Ответ DeepSeek
-          <textarea id="answer2" placeholder="ХРОНОЛОГИЯ:&#10;СТАТУС:&#10;ТЕМЫ:"></textarea>
+          <textarea id="answer2" placeholder="ТЕМЫ:&#10;- Тема > Подтема > Уточнение | в тикете | обоснование..."></textarea>
         </label>
-        <button class="next" id="parse2" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>Разобрать ответ и заполнить поля</button>
+        <button class="next" id="parse2" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>Разобрать ответ и добавить темы</button>
       </div>
     </details>
     <p class="hint msg" id="parse2-msg" role="status"></p>
 
     <div class="fields">
-      <label>Хронология (по порядку событий)
-        <textarea id="chrono"></textarea>
-      </label>
-      <label>Текущий статус: обещано, сделано, открыто
-        <textarea id="status"></textarea>
-      </label>
       <div class="fieldlabel">Темы обращения</div>
       <div class="orderline" id="theme-order"></div>
       <div class="themepick">
@@ -174,9 +347,9 @@
       <p class="hint" id="theme-source"></p>
       <ul class="tlist" id="theme-list"></ul>
 
-      <!-- Блок похожих кейсов из архива по выбранным темам -->
-      <div class="similar-cases-box" id="similar-cases-box">
-        <div class="fieldlabel" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <!-- Блок похожих кейсов из архива в аккордеоне (по умолчанию свернут) -->
+      <details class="similar-cases-box" id="similar-cases-details">
+        <summary style="cursor:pointer;padding:4px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
           <span style="font-weight:700;display:inline-flex;align-items:center;gap:6px;color:var(--ink);">
             <svg class="i" aria-hidden="true" focusable="false" style="color:var(--ac);"><use href="assets/icons.svg#i-spark"/></svg>
             Похожие кейсы из базы (по темам обращения)
@@ -185,88 +358,131 @@
             <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-clip"/></svg>
             Скопировать выжимку для DeepSeek
           </button>
+        </summary>
+        <div style="margin-top:10px;">
+          <p class="hint" style="margin:2px 0 8px;">Короткая выдержка из manifest.json: темы, суть проблемы, вердикт и что сработало в похожих ситуациях.</p>
+          <div id="similar-cases-list" class="similar-list">
+            <p class="hint" style="font-style:italic;margin:6px 0;">Добавьте темы обращения выше, чтобы найти похожие кейсы из архива.</p>
+          </div>
+          <span class="hint" id="similar-copy-status" role="status" style="font-size:12px;color:var(--good);display:block;margin-top:4px;"></span>
         </div>
-        <p class="hint" style="margin:2px 0 8px;">Короткая выдержка из manifest.json: темы, суть проблемы, вердикт и что сработало в похожих ситуациях.</p>
-        <div id="similar-cases-list" class="similar-list">
-          <p class="hint" style="font-style:italic;margin:6px 0;">Добавьте темы обращения выше, чтобы найти похожие кейсы из архива.</p>
-        </div>
-        <span class="hint" id="similar-copy-status" role="status" style="font-size:12px;color:var(--good);display:block;margin-top:4px;"></span>
-      </div>
+      </details>
     </div>
 
     <div class="actions">
       <p class="error" id="err-2" role="alert"></p>
-      <button class="next" id="next-2" type="button">Далее к блоку «Контекст клиента»<svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-next"/></svg></button>
+      <button class="next pri" id="next-2" type="button" style="width:100%;justify-content:center;padding:14px 20px;font-size:15px;background:#1668e3;">
+        Далее: Инструкции & правила
+        <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-next"/></svg>
+      </button>
     </div>
   </section>
 
-  <!-- ШАГ 3 -->
+  <!-- ШАГ 3: Инструкции & правила -->
   <section class="step" id="step-3" hidden>
-    <h2><button type="button" class="linkbtn" data-n="3">Шаг 3. Контекст клиента<span class="backicon"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-back"/></svg></span></button></h2>
-    <p class="task">Заполните по карточке клиента в CRM. Критерии взяты из инструкции <a id="memo-link" href="#" target="_blank" rel="noopener">«Памятка» (Loyalty team)</a>.</p>
-    <p class="hint tablinks" id="tablinks"></p>
-    <div class="fields">
-      <div class="fieldlabel">Критичность ситуации <span class="src">Памятка, блок «Оцените критичность ситуации»</span></div>
-      <label class="chk"><input type="checkbox" id="k1"> обращение мамочки, человека с ограниченными возможностями или медийной личности</label>
-      <label class="chk"><input type="checkbox" id="k2"> заказ для гуманитарной помощи или благотворительности</label>
-      <div class="fieldlabel" style="margin-top:12px">Метки на клиенте <span class="src">Памятка, блок критериев клиента</span></div>
-      <label class="chk"><input type="checkbox" id="l1"> «фрод: злоупотребляет»</label>
-      <label class="chk"><input type="checkbox" id="l2"> «хамит, ругается»</label>
-      <label class="chk"><input type="checkbox" id="l3"> «бан купонов»</label>
-      <label class="chk"><input type="checkbox" id="l4"> негативные комментарии других подразделений</label>
-      <div class="fieldlabel" style="margin-top:12px">Показатели клиента <span class="src">Памятка, блок критериев клиента</span></div>
-      <label class="row">Начислений по претензиям за 2 месяца<input type="number" id="c-acc" min="0"></label>
-      <div class="numgrid">
-        <label>Заказов<input type="number" id="c-orders" min="0"></label>
-        <label>Отмен<input type="number" id="c-cancels" min="0"></label>
-        <label>Возвратов<input type="number" id="c-returns" min="0"></label>
+    <div class="phase-card">
+      <div class="phase-card-left">
+        <div class="phase-card-icon">
+          <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>
+        </div>
+        <div class="phase-card-text">
+          <h2 class="phase-card-title">Фаза 3: Инструкции & правила Loyalty</h2>
+          <p class="phase-card-desc">Проверьте релевантные инструкции и правила применения перед переходом к формированию решения.</p>
+        </div>
       </div>
-      <p class="calc" id="calc-shares"></p>
-      <label class="row">Стоимость заказа, ₽<input type="number" id="c-sum" min="0"></label>
-      <label>Доходность и статус клиента (премиальный, медийный, плашка VIP), своими словами<input type="text" id="c-status" autocomplete="off"></label>
+      <a href="" id="step3-memo-link" target="_blank" rel="noopener noreferrer" class="phase-card-btn">
+        <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-book"/></svg>
+        База Loyalty
+      </a>
     </div>
-    <div class="verdict" id="verdict"></div>
-    <div class="actions"><button class="next" id="next-3" type="button">Далее к блоку «Решение и тексты»<svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-next"/></svg></button></div>
+
+    <div class="fields">
+      <div class="tablinks" id="tablinks"></div>
+      <div style="margin-bottom:16px;">
+        <div class="fieldlabel" style="font-weight:700;margin-bottom:6px;">Выбранные темы обращения:</div>
+        <div id="step3-themes"></div>
+      </div>
+      <div>
+        <div class="fieldlabel" style="font-weight:700;margin-bottom:6px;">Вердикт по критериям Памятки:</div>
+        <pre id="step3-verdict" class="verdict-pre"></pre>
+      </div>
+    </div>
+
+    <div class="actions" style="margin-top:20px;">
+      <button class="next pri" id="next-3" type="button" style="width:100%;justify-content:center;padding:14px 20px;font-size:15px;background:#1668e3;">
+        Далее: Чек-лист действий
+        <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-next"/></svg>
+      </button>
+    </div>
   </section>
 
-  <!-- ШАГ 4 -->
+  <!-- ШАГ 4: Действия -->
   <section class="step" id="step-4" hidden>
-    <h2><button type="button" class="linkbtn" data-n="4">Шаг 4. Решение и тексты<span class="backicon"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-back"/></svg></span></button></h2>
-    <p class="task">DeepSeek предложит варианты по инструкциям Loyalty, вы выберете, и он напишет чеклист, ответ клиенту и комментарий.</p>
-    <details class="helper" id="helper4" open>
-      <summary><svg class="ds" aria-hidden="true" focusable="false"><use href="assets/icons.svg#ic-deepseek"/></svg><span>Помощник DeepSeek</span></summary>
-      <div class="body">
-        <ol class="how">
-          <li>Вставьте промт в тот же чат DeepSeek: он выдаст варианты и спросит ваш выбор.</li>
-          <li>Ответьте, какой вариант берёте и что уточняете (сумма, согласие клиента).</li>
-          <li>Вставьте итоговый ответ сюда и нажмите «Разобрать».</li>
-        </ol>
-        <div class="fieldlabel">Страницы инструкций в промте</div>
-        <div id="pages-list"></div>
-        <p><button class="next small" id="build-prompt" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-clip"/></svg>Собрать и скопировать промт</button> <span class="hint" id="prompt4-state" role="status"></span></p>
-        <details class="inner"><summary>Показать промт</summary><pre id="prompt4-text"></pre></details>
-        <label style="margin-top:14px">Итоговый ответ DeepSeek
-          <textarea id="answer4" placeholder="ЧЕКЛИСТ:&#10;СООБЩЕНИЕ:&#10;КОММЕНТАРИЙ:"></textarea>
-        </label>
-        <button class="next" id="parse4" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>Разобрать ответ</button>
+    <div class="phase-card">
+      <div class="phase-card-left">
+        <div class="phase-card-icon">
+          <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>
+        </div>
+        <div class="phase-card-text">
+          <h2 class="phase-card-title">Фаза 4: Чек-лист действий и ответ клиенту</h2>
+          <p class="phase-card-desc">Сформируйте финальный чек-лист действий, комментарий в тикет и текст сообщения клиенту на основе инструкций.</p>
+        </div>
       </div>
-    </details>
-    <p class="hint msg" id="parse4-msg" role="status"></p>
-    <div class="fields">
-      <div class="outbox"><label>Чеклист<textarea id="out-check"></textarea></label><button class="next small cp" data-for="out-check" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-copy"/></svg><span>Копировать</span></button></div>
-      <div class="outbox"><label>Ответ клиенту в чате<textarea id="out-reply"></textarea></label><button class="next small cp" data-for="out-reply" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-copy"/></svg><span>Копировать</span></button></div>
-      <div class="outbox"><label>Комментарий в тикете<textarea id="out-comment"></textarea></label><button class="next small cp" data-for="out-comment" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-copy"/></svg><span>Копировать</span></button></div>
-      <p class="hint" id="ph-note"></p>
     </div>
+
+    <div class="fieldlabel">Страницы инструкций Loyalty (кэш operator-data)</div>
+    <div class="pages-list" id="pages-list"></div>
+    <p><button class="next small pri" id="build-prompt" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-clip"/></svg>Собрать промт step003 и скопировать</button> <span class="hint" id="prompt4-state" role="status"></span></p>
+    <details class="inner" id="helper4"><summary>Показать текст промта</summary><pre id="prompt4-text"></pre></details>
+    <label style="margin-top:14px">Итоговый ответ DeepSeek
+      <textarea id="answer4" placeholder="ЧЕКЛИСТ:&#10;СООБЩЕНИЕ:&#10;КОММЕНТАРИЙ:"></textarea>
+    </label>
+    <button class="next" id="parse4" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>Разобрать ответ</button>
+    <p class="hint msg" id="parse4-msg" role="status"></p>
+
+    <div class="fields" style="margin-top:16px">
+      <div class="outbox">
+        <label>Чеклист
+          <textarea id="out-check"></textarea>
+        </label>
+        <button class="next small cp" data-for="out-check" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-copy"/></svg><span>Копировать</span></button>
+      </div>
+      <div class="outbox">
+        <label>Сообщение клиенту (Tone of Voice Loyalty)
+          <textarea id="out-reply"></textarea>
+        </label>
+        <button class="next small cp" data-for="out-reply" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-copy"/></svg><span>Копировать</span></button>
+      </div>
+      <div class="outbox">
+        <label>Комментарий в тикет WebCRM
+          <textarea id="out-comment"></textarea>
+        </label>
+        <button class="next small cp" data-for="out-comment" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-copy"/></svg><span>Копировать</span></button>
+      </div>
+      <p class="hint er" id="ph-note" role="status"></p>
+    </div>
+
     <div class="actions">
-      <button class="next" id="next-4" type="button">Далее к блоку «Запись кейса»<svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-next"/></svg></button>
+      <button class="next pri" id="next-4" type="button" style="width:100%;justify-content:center;padding:14px 20px;font-size:15px;background:#1668e3;">
+        Далее: Запись кейса
+        <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-next"/></svg>
+      </button>
     </div>
   </section>
 
-  <!-- ШАГ 5 -->
+  <!-- ШАГ 5: Запись -->
   <section class="step" id="step-5" hidden>
-    <h2><button type="button" class="linkbtn" data-n="5">Шаг 5. Запись кейса<span class="backicon"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-back"/></svg></span></button></h2>
-    <p class="task">Проверьте карточку кейса перед отправкой в архив. Личные данные автоматически обезличиваются.</p>
+    <div class="phase-card">
+      <div class="phase-card-left">
+        <div class="phase-card-icon">
+          <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>
+        </div>
+        <div class="phase-card-text">
+          <h2 class="phase-card-title">Фаза 5: Запись кейса в архив</h2>
+          <p class="phase-card-desc">Проверьте карточку кейса перед отправкой в архив operator-data. Личные данные автоматически обезличиваются.</p>
+        </div>
+      </div>
+    </div>
 
     <div class="fields">
       <label for="case-title">Ёмкий заголовок кейса

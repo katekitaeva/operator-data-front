@@ -3,7 +3,7 @@
 import { $, val } from "./ui.js";
 import { state, save } from "./state.js";
 import { parseClientUrl, savedOrigin, updateCrmBar } from "./crm.js";
-import { verdict } from "./steps/step3.js";
+import { verdict } from "./steps/step1.js";
 import { getThemesVersion } from "./steps/step2.js";
 import { ghPut } from "./github.js";
 

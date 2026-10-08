@@ -2,7 +2,13 @@
 
 export const LABELS = {
   "ЗАКАЗ": "order",
+  "НОМЕР ЗАКАЗА": "order",
+  "ТИКЕТ": "ticket",
+  "НОМЕР ТИКЕТА": "ticket",
+  "КЛИЕНТ": "client-url",
+  "ID КЛИЕНТА": "client-url",
   "ПРОБЛЕМА": "problem",
+  "СУТЬ ПРОБЛЕМЫ": "problem",
   "ТРЕБОВАНИЕ": "demand",
   "ИЗМЕНЕНИЕ": "changed",
   "ИЗМЕНЕНИЯ": "changed",
@@ -16,6 +22,8 @@ export const LABELS = {
 
 export const NAMES = {
   order: "заказ",
+  ticket: "тикет",
+  "client-url": "клиент",
   problem: "проблема",
   demand: "требование",
   changed: "изменение",

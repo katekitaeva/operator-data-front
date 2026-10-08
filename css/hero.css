@@ -1,6 +1,6 @@
 /* Шапка: бейдж подключения, шестерёнка, панель настроек, роли (как в librarian.html) */
 /* шапка и роли: как в librarian.html */
-.hero{max-width:760px;margin:0 auto;padding:14px 16px 6px}
+.hero{max-width:1060px;margin:0 auto;padding:14px 20px 6px;width:100%}
 .hero-top{display:flex;justify-content:flex-end;align-items:center;gap:10px}
 .roles{--big:124px;--small:60px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr) minmax(0,1fr);gap:10px;align-items:start;justify-items:center;margin:2px 0 4px}
 .role{display:flex;flex-direction:column;align-items:center;text-align:center;color:var(--ac);text-decoration:none;min-width:0}
@@ -12,7 +12,7 @@
 .role.side .rname{margin-top:5px;font-size:13px;font-weight:600;color:var(--soft)}
 .role.side:hover,.role.side:focus-visible{opacity:1;background:var(--info)}.role.side:hover .rico,.role.side:focus-visible .rico{transform:translateY(-2px) scale(1.06)}.role.side:hover .rname,.role.side:focus-visible .rname{color:var(--ac)}
 @media (prefers-reduced-motion:reduce){.role.side,.role.side .rico{transition:none}.role.side:hover .rico,.role.side:focus-visible .rico{transform:none}}
-.sync-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--soft);font-size:13px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.sync-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--soft);font-size:13px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
 .sync-badge:before{content:"";width:8px;height:8px;border-radius:50%;background:#aab8c0;flex:none}.sync-badge.ok{color:var(--good)}.sync-badge.ok:before{background:var(--good)}.sync-badge.off:before{background:#aab8c0}
 .settings-btn{width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ac);cursor:pointer;font-size:18px;box-shadow:var(--sh);padding:0;flex:none}
 .settings-panel{display:none;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh);padding:20px;margin:6px 0 20px}.settings-panel.open{display:block}

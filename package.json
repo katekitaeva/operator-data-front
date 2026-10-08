@@ -1,0 +1,17 @@
+{
+  "name": "operator-data-front",
+  "version": "1.0.0",
+  "description": "Проводник по претензии — фронтенд для разбора обращений и работы с архивом",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "node -e \"console.log('Build successful')\""
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "jsdom": "^30.1.2"
+  }
+}

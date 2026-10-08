@@ -1,23 +1,45 @@
-// Навигация между шагами: прогресс, показ/сворачивание секций, переход.
+// Навигация между шагами: прогресс-кнопки, переключение шагов, CRM-меню.
 // Шаги подписываются на отрисовку через onRender(), чтобы nav не импортировал шаги.
 
 import { TOTAL, STEP_COUNT } from "./config.js";
 import { state, save } from "./state.js";
 import { updateCrmBar } from "./crm.js";
 
+const STEP_LABELS = [
+  "Суть",
+  "Темы",
+  "Инструкции & правила",
+  "Действия",
+  "Запись"
+];
+
 const renderHooks = [];
 /** fn вызывается в render(), когда текущий шаг >= minStep */
 export function onRender(minStep, fn) { renderHooks.push([minStep, fn]); }
 
 export function renderProgress() {
-  const bar = document.getElementById("progress");
-  if (!bar) return;
-  bar.innerHTML = "";
+  const nav = document.getElementById("step-nav") || document.getElementById("progress");
+  if (!nav) return;
+  nav.innerHTML = "";
   for (let i = 1; i <= TOTAL; i++) {
-    const s = document.createElement("span");
-    if (i < state.current) s.className = "done";
-    else if (i === state.current) s.className = "on";
-    bar.appendChild(s);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "step-nav-btn";
+    btn.dataset.step = String(i);
+    if (i === state.current) btn.classList.add("active");
+    else if (i < state.current) btn.classList.add("done");
+
+    const numSpan = document.createElement("span");
+    numSpan.className = "step-nav-num";
+    numSpan.textContent = String(i);
+
+    const labelSpan = document.createElement("span");
+    labelSpan.className = "step-nav-text";
+    labelSpan.textContent = STEP_LABELS[i - 1] || ("Шаг " + i);
+
+    btn.append(numSpan, labelSpan);
+    btn.addEventListener("click", () => goTo(i));
+    nav.appendChild(btn);
   }
 }
 
@@ -26,8 +48,7 @@ export function render() {
   for (let n = 1; n <= STEP_COUNT; n++) {
     const el = document.getElementById("step-" + n);
     if (el) {
-      el.hidden = n > state.current;
-      el.classList.toggle("collapsed", n < state.current);
+      el.hidden = n !== state.current;
     }
   }
   updateCrmBar();
@@ -37,14 +58,14 @@ export function render() {
 export function goTo(n) {
   state.current = n; save(); render();
   const target = document.getElementById("step-" + n);
-  if (target) target.scrollIntoView({ behavior: "smooth" });
+  if (target && typeof target.scrollIntoView === "function") target.scrollIntoView({ behavior: "smooth" });
 }
 
 export function initNav() {
   // клик по заголовку пройденного шага возвращает к нему
   document.querySelectorAll(".linkbtn").forEach(b => b.addEventListener("click", () => {
     const n = +b.dataset.n;
-    if (state.current > n) goTo(n);
+    if (n) goTo(n);
   }));
 
   // Живое обновление CRM-меню при вводе ключевых полей

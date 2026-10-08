@@ -65,31 +65,122 @@ export async function ghPut(path, text, message = "Запись") {
 export function connSummary() {
   const c = conn();
   const bd = $("conn-sum"), on = !!(c && c.token);
-  bd.textContent = on ? "подключено: " + c.owner + "/" + c.repo + " (" + (c.branch || "main") + ")" : "не подключено";
-  bd.className = "sync-badge " + (on ? "ok" : "off");
-  if (c) { $("c-owner").value = c.owner || ""; $("c-repo").value = c.repo || "operator-data"; $("c-branch").value = c.branch || "main"; }
+  if (bd) {
+    bd.textContent = on ? "подключено: " + c.owner + "/" + c.repo + " (" + (c.branch || "main") + ")" : "🔌 Подключить GitHub (не подключено)";
+    bd.className = "sync-badge " + (on ? "ok" : "off");
+  }
+  const ownerEl = $("c-owner");
+  const repoEl = $("c-repo");
+  const branchEl = $("c-branch");
+  const tokenEl = $("c-token");
+  if (ownerEl) ownerEl.value = (c && c.owner) || ownerEl.value || "katekitaeva";
+  if (repoEl) repoEl.value = (c && c.repo) || repoEl.value || "operator-data";
+  if (branchEl) branchEl.value = (c && c.branch) || branchEl.value || "main";
+  if (tokenEl && on) {
+    tokenEl.placeholder = "Токен сохранён (введите новый для замены)";
+  }
 }
 
 export function initConnection() {
-  // шестерёнка в шапке открывает и закрывает панель настроек
-  $("settingsBtn").addEventListener("click", () => $("conn").classList.toggle("open"));
-  $("c-save").addEventListener("click", async () => {
-    const c = { owner: val("c-owner"), repo: val("c-repo") || "operator-data", branch: val("c-branch") || "main", token: $("c-token").value.trim() };
+  // шестерёнка в шапке и бейдж подключения открывают и закрывают панель настроек
+  const togglePanel = () => $("conn")?.classList.toggle("open");
+  $("settingsBtn")?.addEventListener("click", togglePanel);
+  $("conn-sum")?.addEventListener("click", togglePanel);
+
+  $("c-save")?.addEventListener("click", async () => {
+    const prevConn = conn();
+    const ownerVal = (val("c-owner") || "katekitaeva").trim();
+    const repoVal = (val("c-repo") || "operator-data").trim();
+    const branchVal = (val("c-branch") || "main").trim();
+    let tokenVal = ($("c-token")?.value || "").trim();
+
+    // Если поле токена пустое, но токен уже был сохранён ранее — используем прежний токен
+    if (!tokenVal && prevConn && prevConn.token) {
+      tokenVal = prevConn.token;
+    }
+
+    const c = { owner: ownerVal, repo: repoVal, branch: branchVal, token: tokenVal };
     const msg = $("c-msg");
-    if (!c.owner || !c.token) { msg.textContent = "Заполните владельца и токен."; return; }
-    try { localStorage.setItem(CONN_KEY, JSON.stringify(c)); } catch (e) {}
-    $("c-token").value = "";
+
+    if (!c.token) {
+      if (msg) {
+        msg.className = "hint msg er";
+        msg.textContent = "Введите персональный токен GitHub (Fine-grained token с правами Contents: Read and write).";
+      }
+      return;
+    }
+    if (!c.owner || !c.repo) {
+      if (msg) {
+        msg.className = "hint msg er";
+        msg.textContent = "Заполните владельца и имя репозитория.";
+      }
+      return;
+    }
+
+    if (msg) {
+      msg.className = "hint msg";
+      msg.textContent = "Проверяю подключение к GitHub…";
+    }
+
+    // Сначала проверяем доступ к репозиторию через GitHub API
     try {
-      const m = JSON.parse(await ghGet("cache/manifest.json"));
-      msg.textContent = "Подключено. Страниц в кэше: " + Object.keys(m.pages).length;
-      $("conn").classList.remove("open");
-    } catch (e) { msg.textContent = "Не удалось прочитать cache/manifest.json (" + e.message + "). Проверьте логин, репозиторий и права токена (Contents: Read and write)."; }
-    connSummary();
-    document.dispatchEvent(new CustomEvent("operator:changed"));
+      const repoCheckUrl = `https://api.github.com/repos/${encodeURIComponent(c.owner)}/${encodeURIComponent(c.repo)}`;
+      const repoRes = await fetch(repoCheckUrl, {
+        headers: {
+          Authorization: `Bearer ${c.token}`,
+          Accept: "application/vnd.github+json"
+        },
+        cache: "no-store"
+      });
+
+      if (!repoRes.ok) {
+        if (repoRes.status === 401) throw new Error("401 Неверный токен (Unauthorized). Проверьте корректность токена.");
+        if (repoRes.status === 404) throw new Error(`404 Репозиторий ${c.owner}/${c.repo} не найден. Проверьте права токена на приватный репозиторий.`);
+        if (repoRes.status === 403) throw new Error("403 Доступ запрещен (Forbidden). Проверьте права токена (Contents: Read and write).");
+        throw new Error(`${repoRes.status} Ошибка проверки репозитория.`);
+      }
+
+      // Сохраняем проверенное подключение
+      try { localStorage.setItem(CONN_KEY, JSON.stringify(c)); } catch (e) {}
+
+      // Дополнительно проверяем наличие манифеста
+      let cacheNote = "";
+      try {
+        const m = JSON.parse(await ghGet("cache/manifest.json"));
+        cacheNote = ` Страниц в кэше: ${Object.keys(m.pages || {}).length}.`;
+      } catch (err) {
+        cacheNote = " (кэш манифеста пока не создан в репозитории).";
+      }
+
+      if (msg) {
+        msg.className = "hint msg ok";
+        msg.textContent = `Подключено к ${c.owner}/${c.repo}!${cacheNote}`;
+      }
+      if ($("c-token")) $("c-token").value = "";
+      connSummary();
+      document.dispatchEvent(new CustomEvent("operator:changed"));
+      setTimeout(() => { $("conn")?.classList.remove("open"); }, 1800);
+    } catch (e) {
+      if (msg) {
+        msg.className = "hint msg er";
+        msg.textContent = `Не удалось подключиться: ${e.message}`;
+      }
+    }
   });
-  $("c-forget").addEventListener("click", () => {
+
+  $("c-forget")?.addEventListener("click", () => {
     try { localStorage.removeItem(CONN_KEY); } catch (e) {}
-    connSummary(); $("c-msg").textContent = "Токен удалён из браузера.";
+    connSummary();
+    const tokenEl = $("c-token");
+    if (tokenEl) {
+      tokenEl.value = "";
+      tokenEl.placeholder = "github_pat_...";
+    }
+    const msg = $("c-msg");
+    if (msg) {
+      msg.className = "hint msg";
+      msg.textContent = "Токен удалён из браузера.";
+    }
     document.dispatchEvent(new CustomEvent("operator:changed"));
   });
 }

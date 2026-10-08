@@ -6,9 +6,9 @@ import { state, save, load } from "./state.js";
 import { $ } from "./ui.js";
 import { render, initNav } from "./nav.js";
 import { connSummary, initConnection } from "./github.js";
-import { initStep1, loadPrompt, updateClientUrlMsg, currentLocalDatetime, updateHelperVisibility } from "./steps/step1.js";
+import { initStep1, loadPrompt, updateClientUrlMsg, currentLocalDatetime, updateHelperVisibility, renderVerdict } from "./steps/step1.js";
 import { initStep2, renderThemes, renderSummary } from "./steps/step2.js";
-import { initStep3, renderVerdict } from "./steps/step3.js";
+import { initStep3 } from "./steps/step3.js";
 import { initStep4, updPh } from "./steps/step4.js";
 import { initStep5, renderPreview } from "./steps/step5.js";
 import { initCaseLoader } from "./case-loader.js";
@@ -67,9 +67,9 @@ export function resetClaimForm() {
   renderPreview();
   render();
 
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  if (typeof window.scrollTo === "function") window.scrollTo({ top: 0, behavior: "smooth" });
   const s1 = document.getElementById("step-1");
-  if (s1) s1.scrollIntoView({ behavior: "smooth" });
+  if (s1 && typeof s1.scrollIntoView === "function") s1.scrollIntoView({ behavior: "smooth" });
 }
 
 // Обработка кнопки «Начать новую претензию» через встроенное модальное окно (без блокирующего window.confirm)

@@ -6,13 +6,13 @@ import { state, save } from "../state.js";
 import { goTo } from "../nav.js";
 import { DOCS } from "../config.js";
 import { ghGet } from "../github.js";
-import { verdict } from "./step3.js";
+import { verdict } from "./step1.js";
 import { parseAnswer, LABELS4 } from "../parser.js";
 
 const factsText = () => [
   "Суть проблемы: " + val("problem"), "Требование клиента: " + val("demand"),
   val("changed") && "Требование менялось: " + val("changed"), val("legal") && "Юридические упоминания: " + val("legal"),
-  "Хронология:\n" + val("chrono"), "Статус:\n" + val("status"),
+  val("contacts") && "Контакты: " + val("contacts"), val("tasks") && "Задачи: " + val("tasks"),
   "Темы обращения: " + state.themes.map(t => t.path + " (" + t.status + ")").join("; ")
 ].filter(Boolean).join("\n");
 
@@ -61,7 +61,10 @@ export function initStep4() {
     const map = { check: "out-check", reply: "out-reply", comment: "out-comment" };
     Object.keys(res).forEach(k => { $(map[k]).value = res[k]; });
     msg.textContent = "Заполнено: " + Object.keys(res).map(k => ({ check: "чеклист", reply: "ответ клиенту", comment: "комментарий" })[k]).join(", ") + ".";
-    updPh(); $("helper4").open = false; save();
+    updPh();
+    const h4 = $("helper4");
+    if (h4) h4.open = false;
+    save();
   });
 
   document.querySelectorAll(".cp").forEach(b => b.addEventListener("click", async () => {

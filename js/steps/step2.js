@@ -17,6 +17,7 @@ const sels = ["t1", "t2", "t3"].map(id => document.getElementById(id));
 /* ---------- Сводка шага 1 ---------- */
 export function renderSummary() {
   const box = $("sum-card");
+  if (!box) return;
   box.textContent = "";
   const rows = [["Тикет", "ticket"], ["Заказ", "order"], ["Проблема", "problem"], ["Требование", "demand"],
                 ["Менялось позже", "changed"], ["Юридические упоминания", "legal"], ["Контакты", "contacts"], ["Задачи", "tasks"]];
@@ -40,6 +41,7 @@ export function renderSummary() {
 /* Номер заказа рядом с темами: оператор переносит в тикет и то и другое */
 function renderThemeOrder() {
   const slot = $("theme-order"), o = val("order");
+  if (!slot) return;
   slot.textContent = "";
   if (!o) return;
   slot.append("Заказ для тикета: ", linkOrCopy(o, orderUrl(o)));
@@ -539,13 +541,10 @@ export function initStep2() {
   $("parse2").addEventListener("click", () => {
     const msg = $("parse2-msg");
     const res = parseAnswer($("answer2").value, LABELS2);
-    if (!Object.keys(res).length) {
-      msg.textContent = "Не нашёл меток ХРОНОЛОГИЯ:, СТАТУС:, ТЕМЫ:. Вставьте ответ DeepSeek целиком.";
+    if (!res.themes && !Object.keys(res).length) {
+      msg.textContent = "Не нашёл метки ТЕМЫ:. Вставьте ответ DeepSeek со списком тем.";
       return;
     }
-    const done = [];
-    if (res.chrono) { $("chrono").value = res.chrono; done.push("хронология"); }
-    if (res.status) { $("status").value = res.status; done.push("статус"); }
     let unknown = 0;
     if (res.themes) {
       res.themes.split("\n").forEach(line => {
@@ -554,24 +553,21 @@ export function initStep2() {
         addTheme(parts[0], /тикет/i.test(parts[1] || "") ? "в тикете" : "добавляю", parts.slice(2).join(" | ").trim());
       });
       state.themes.forEach(t => { if (t.unknown) unknown++; });
-      renderThemes(); done.push("темы");
+      renderThemes();
+      msg.textContent = "Темы добавлены в список." + (unknown ? " Тем вне справочника: " + unknown + " (отмечены ⚠️)." : "");
     }
-    msg.textContent = "Заполнено: " + done.join(", ") + "." + (unknown ? " Тем вне списка: " + unknown + " (отмечены ⚠️), проверьте." : "");
-    $("helper2").open = false;
+    const h2 = $("helper2");
+    if (h2) h2.open = false;
     save();
   });
 
   $("next-2").addEventListener("click", () => {
     const err = $("err-2");
-    const bad = [];
-    ["chrono", "status"].forEach(id => {
-      const el = $(id), empty = !el.value.trim();
-      el.classList.toggle("invalid", empty);
-      if (empty) bad.push(id === "chrono" ? "хронологию" : "статус");
-    });
-    if (!state.themes.length) bad.push("хотя бы одну тему");
-    if (bad.length) { err.textContent = "Заполните: " + bad.join(", ") + "."; return; }
-    err.textContent = "";
+    if (!state.themes.length) {
+      if (err) err.textContent = "Выберите или добавьте хотя бы одну тему обращения.";
+      return;
+    }
+    if (err) err.textContent = "";
     goTo(3);
   });
 }
