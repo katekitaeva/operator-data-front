@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Проводник по претензии</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,6 91,29 50,52 9,29' fill='%237ee0e8'/%3E%3Cpolygon points='9,29 50,52 50,95 9,72' fill='%2310a3b2'/%3E%3Cpolygon points='91,29 50,52 50,95 91,72' fill='%230a7482'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/hero.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/steps.css">
+</head>
+<body>
+<header class="hero"><div class="hero-top"><span class="sync-badge off" id="conn-sum">не подключено</span><button class="settings-btn" id="settingsBtn" type="button" title="Настройки подключения" aria-label="Настройки подключения">⚙</button></div><nav class="roles" aria-label="Роли"><a class="role side" href="librarian.html" title="Библиотекарь: кэш документации"><svg class="rico" aria-hidden="true" focusable="false"><use href="assets/icons.svg#ic-librarian"/></svg><span class="rname">Библиотекарь</span></a><div class="role main" aria-current="page"><svg class="rico" aria-hidden="true" focusable="false"><use href="assets/icons.svg#ic-guide"/></svg><h1>Проводник по претензии</h1></div><a class="role side" href="memuarist.html" title="История кейсов и статистика"><svg class="rico" aria-hidden="true" focusable="false"><use href="assets/icons.svg#ic-historian"/></svg><span class="rname">Историк</span></a></nav></header>
+<main class="app">
+  <div class="settings-panel" id="conn"><h3>Подключение к GitHub</h3>
+    <p>Токен хранится только в этом браузере (localStorage) и никогда не попадает в код страницы или в репозиторий. На новом устройстве введите его заново. Нужен fine-grained personal access token с правом Contents: Read and write для репозитория с данными.</p>
+    <div class="settings-grid">
+      <div><label for="c-owner">Владелец (логин GitHub)</label><input type="text" id="c-owner" autocomplete="off" placeholder="katekitaeva"></div>
+      <div><label for="c-repo">Репозиторий</label><input type="text" id="c-repo" value="operator-data" autocomplete="off"></div>
+      <div><label for="c-branch">Ветка</label><input type="text" id="c-branch" value="main" autocomplete="off"></div><div></div>
+      <div class="settings-full"><label for="c-token">Токен (Fine-grained, Contents: Read and write)</label><input type="password" id="c-token" autocomplete="off" placeholder="github_pat_..."></div>
+    </div>
+    <div class="btns" style="margin-top:0"><button class="next small pri" id="c-save" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-plug"/></svg>Сохранить и проверить</button><button class="next small" id="c-forget" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-trash"/></svg>Забыть токен</button></div>
+    <p class="hint msg" id="c-msg" role="status"></p>
+  </div>
+
+  <!-- Верхнее сквозное CRM-меню (отображается на всех шагах при наличии ссылок) -->
+  <nav class="crm-top-bar" id="crm-top-bar" hidden aria-label="Ссылки CRM">
+    <div class="crm-bar-links" id="crm-bar-links"></div>
+  </nav>
+
+  <div class="progress" id="progress" aria-hidden="true"></div>
+
+  <!-- ШАГ 1 -->
+  <section class="step" id="step-1">
+    <h2><button type="button" class="linkbtn" data-n="1">Шаг 1. Прочитать претензию<span class="backicon"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-back"/></svg></span></button></h2>
+    <p class="task">Прочитайте претензию и заполните поля ниже.</p>
+
+    <details class="helper" id="helper" open>
+      <summary><svg class="ds" aria-hidden="true" focusable="false"><use href="assets/icons.svg#ic-deepseek"/></svg><span>Помощник DeepSeek: разобрать чат с клиентом</span></summary>
+      <div class="body">
+        <p class="hint" style="margin-top:0">Вставьте слепок чата с клиентом из CRM, укажите номер тикета и адрес карточки клиента, затем нажмите кнопку «Собрать промт step001 и скопировать» и отправьте собранный промт в <a href="https://chat.deepseek.com/" target="_blank" rel="noopener">DeepSeek</a>.</p>
+        
+        <div class="helper-inputs-grid">
+          <div>
+            <label for="helper-datetime">Дата и время диалога (опорная точка)
+              <div class="input-with-btn">
+                <input type="datetime-local" id="helper-datetime">
+                <button class="next small" id="btn-helper-now" type="button" title="Установить текущее время">Сейчас</button>
+              </div>
+            </label>
+          </div>
+          <div>
+            <label for="helper-ticket">Номер вашего тикета
+              <input type="text" id="helper-ticket" placeholder="Например: 746899721" autocomplete="off">
+            </label>
+          </div>
+          <div class="full-width">
+            <label for="helper-client-url">Адрес карточки клиента в CRM
+              <input type="url" id="helper-client-url" placeholder="https://crm.o3team.ru/clients/nbvtyqap" autocomplete="off">
+            </label>
+          </div>
+          <div class="full-width">
+            <label for="helper-chat">Слепок чата с клиентом из CRM (включая сообщения бота и шум)
+              <textarea id="helper-chat" rows="6" placeholder="Вставьте сюда скопированный текст переписки из WebCRM..."></textarea>
+            </label>
+          </div>
+        </div>
+
+        <div class="helper-actions">
+          <button class="next small pri" id="build-copy-prompt" type="button">
+            <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-clip"/></svg>
+            Собрать промт step001 и скопировать
+          </button>
+          <span class="hint" id="prompt-state" role="status"></span>
+        </div>
+
+        <details class="inner" style="margin-top:10px">
+          <summary>Показать собранный текст промта</summary>
+          <pre id="prompt-text"></pre>
+        </details>
+
+        <label style="margin-top:14px">Ответ DeepSeek
+          <textarea id="answer" placeholder="Вставьте сюда ответ DeepSeek (ЗАКАЗ: ..., ПРОБЛЕМА: ..., ТРЕБОВАНИЕ: ...)"></textarea>
+        </label>
+        <button class="next" id="parse" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>Разобрать ответ и заполнить поля</button>
+      </div>
+    </details>
+    <p class="hint msg" id="parse-msg" role="status"></p>
+
+    <div class="fields">
+      <div>
+        <label for="case-datetime">Дата и время обращения (таймштамп кейса)
+          <div class="input-with-btn">
+            <input type="datetime-local" id="case-datetime">
+            <button class="next small" id="btn-case-now" type="button" title="Установить текущее время">Сейчас</button>
+          </div>
+        </label>
+      </div>
+      <label>Номер вашего тикета
+        <input type="text" id="ticket" autocomplete="off">
+      </label>
+      <label>Номер заказа
+        <input type="text" id="order" autocomplete="off">
+      </label>
+      <label>Адрес карточки клиента в CRM (по нему строятся ссылки на тикет и заказ)
+        <input type="url" id="client-url" autocomplete="off" placeholder="https://crm.o3team.ru/clients/…">
+      </label>
+      <p class="hint msg" id="client-url-msg" role="status"></p>
+      <label>Суть проблемы клиента
+        <textarea id="problem"></textarea>
+      </label>
+      <label>Что требует клиент (одно предложение)
+        <textarea id="demand"></textarea>
+      </label>
+      <label>Требование менялось позже?
+        <input type="text" id="changed" autocomplete="off">
+      </label>
+      <label>Юридические упоминания
+        <input type="text" id="legal" autocomplete="off">
+      </label>
+      <label>Контакты: кто уже общался с клиентом
+        <textarea id="contacts"></textarea>
+      </label>
+      <label>Задачи из чата
+        <textarea id="tasks"></textarea>
+      </label>
+    </div>
+
+    <div class="actions">
+      <p class="error" id="err-1" role="alert"></p>
+      <button class="next" id="next-1" type="button">Далее к блоку «Что произошло»<svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-next"/></svg></button>
+    </div>
+  </section>
+
+  <!-- ШАГ 2 -->
+  <section class="step" id="step-2" hidden>
+    <h2><button type="button" class="linkbtn" data-n="2">Шаг 2. Что произошло<span class="backicon"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-back"/></svg></span></button></h2>
+    <div class="sumcard"><div class="sumtitle">Сводка шага 1 (нажмите на значение, чтобы скопировать)</div><div id="sum-card"></div></div>
+    <p class="task">Восстановите ход событий и определите темы обращения.</p>
+
+    <details class="helper" id="helper2" open>
+      <summary><svg class="ds" aria-hidden="true" focusable="false"><use href="assets/icons.svg#ic-deepseek"/></svg><span>Помощник DeepSeek: хронология, статус, темы</span></summary>
+      <div class="body">
+        <p class="hint">Вставьте промт в тот же чат DeepSeek, где вы разбирали претензию на шаге 1. Текст чата заново вставлять не нужно. DeepSeek сначала спросит, проставлены ли в тикете уже какие-то темы: ответьте ему, перечислив их, или напишите «нет».</p>
+        <p><button class="next small" id="copy-prompt2" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-clip"/></svg>Скопировать промт step002</button> <span class="hint" id="prompt2-state" role="status"></span></p>
+        <details class="inner"><summary>Показать текст промта</summary><pre id="prompt2-text"></pre></details>
+        <label style="margin-top:14px">Ответ DeepSeek
+          <textarea id="answer2" placeholder="ХРОНОЛОГИЯ:&#10;СТАТУС:&#10;ТЕМЫ:"></textarea>
+        </label>
+        <button class="next" id="parse2" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>Разобрать ответ и заполнить поля</button>
+      </div>
+    </details>
+    <p class="hint msg" id="parse2-msg" role="status"></p>
+
+    <div class="fields">
+      <label>Хронология (по порядку событий)
+        <textarea id="chrono"></textarea>
+      </label>
+      <label>Текущий статус: обещано, сделано, открыто
+        <textarea id="status"></textarea>
+      </label>
+      <div class="fieldlabel">Темы обращения</div>
+      <div class="orderline" id="theme-order"></div>
+      <div class="themepick">
+        <select id="t1" aria-label="Тип"></select>
+        <select id="t2" aria-label="Подтип" hidden></select>
+        <select id="t3" aria-label="Уточнение" hidden></select>
+        <input type="text" id="theme-manual" placeholder="или впишите тему вручную">
+        <button class="next small" id="add-theme" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-plus"/></svg>Добавить тему</button>
+      </div>
+      <p class="hint" id="theme-hint"></p>
+      <p class="hint" id="theme-source"></p>
+      <ul class="tlist" id="theme-list"></ul>
+
+      <!-- Блок похожих кейсов из архива по выбранным темам -->
+      <div class="similar-cases-box" id="similar-cases-box">
+        <div class="fieldlabel" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <span style="font-weight:700;display:inline-flex;align-items:center;gap:6px;color:var(--ink);">
+            <svg class="i" aria-hidden="true" focusable="false" style="color:var(--ac);"><use href="assets/icons.svg#i-spark"/></svg>
+            Похожие кейсы из базы (по темам обращения)
+          </span>
+          <button class="next small" id="copy-similar-digest" type="button" style="padding:4px 10px;font-size:12px;" title="Скопировать выжимку похожих кейсов для DeepSeek">
+            <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-clip"/></svg>
+            Скопировать выжимку для DeepSeek
+          </button>
+        </div>
+        <p class="hint" style="margin:2px 0 8px;">Короткая выдержка из manifest.json: темы, суть проблемы, вердикт и что сработало в похожих ситуациях.</p>
+        <div id="similar-cases-list" class="similar-list">
+          <p class="hint" style="font-style:italic;margin:6px 0;">Добавьте темы обращения выше, чтобы найти похожие кейсы из архива.</p>
+        </div>
+        <span class="hint" id="similar-copy-status" role="status" style="font-size:12px;color:var(--good);display:block;margin-top:4px;"></span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <p class="error" id="err-2" role="alert"></p>
+      <button class="next" id="next-2" type="button">Далее к блоку «Контекст клиента»<svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-next"/></svg></button>
+    </div>
+  </section>
+
+  <!-- ШАГ 3 -->
+  <section class="step" id="step-3" hidden>
+    <h2><button type="button" class="linkbtn" data-n="3">Шаг 3. Контекст клиента<span class="backicon"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-back"/></svg></span></button></h2>
+    <p class="task">Заполните по карточке клиента в CRM. Критерии взяты из инструкции <a id="memo-link" href="#" target="_blank" rel="noopener">«Памятка» (Loyalty team)</a>.</p>
+    <p class="hint tablinks" id="tablinks"></p>
+    <div class="fields">
+      <div class="fieldlabel">Критичность ситуации <span class="src">Памятка, блок «Оцените критичность ситуации»</span></div>
+      <label class="chk"><input type="checkbox" id="k1"> обращение мамочки, человека с ограниченными возможностями или медийной личности</label>
+      <label class="chk"><input type="checkbox" id="k2"> заказ для гуманитарной помощи или благотворительности</label>
+      <div class="fieldlabel" style="margin-top:12px">Метки на клиенте <span class="src">Памятка, блок критериев клиента</span></div>
+      <label class="chk"><input type="checkbox" id="l1"> «фрод: злоупотребляет»</label>
+      <label class="chk"><input type="checkbox" id="l2"> «хамит, ругается»</label>
+      <label class="chk"><input type="checkbox" id="l3"> «бан купонов»</label>
+      <label class="chk"><input type="checkbox" id="l4"> негативные комментарии других подразделений</label>
+      <div class="fieldlabel" style="margin-top:12px">Показатели клиента <span class="src">Памятка, блок критериев клиента</span></div>
+      <label class="row">Начислений по претензиям за 2 месяца<input type="number" id="c-acc" min="0"></label>
+      <div class="numgrid">
+        <label>Заказов<input type="number" id="c-orders" min="0"></label>
+        <label>Отмен<input type="number" id="c-cancels" min="0"></label>
+        <label>Возвратов<input type="number" id="c-returns" min="0"></label>
+      </div>
+      <p class="calc" id="calc-shares"></p>
+      <label class="row">Стоимость заказа, ₽<input type="number" id="c-sum" min="0"></label>
+      <label>Доходность и статус клиента (премиальный, медийный, плашка VIP), своими словами<input type="text" id="c-status" autocomplete="off"></label>
+    </div>
+    <div class="verdict" id="verdict"></div>
+    <div class="actions"><button class="next" id="next-3" type="button">Далее к блоку «Решение и тексты»<svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-next"/></svg></button></div>
+  </section>
+
+  <!-- ШАГ 4 -->
+  <section class="step" id="step-4" hidden>
+    <h2><button type="button" class="linkbtn" data-n="4">Шаг 4. Решение и тексты<span class="backicon"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-back"/></svg></span></button></h2>
+    <p class="task">DeepSeek предложит варианты по инструкциям Loyalty, вы выберете, и он напишет чеклист, ответ клиенту и комментарий.</p>
+    <details class="helper" id="helper4" open>
+      <summary><svg class="ds" aria-hidden="true" focusable="false"><use href="assets/icons.svg#ic-deepseek"/></svg><span>Помощник DeepSeek</span></summary>
+      <div class="body">
+        <ol class="how">
+          <li>Вставьте промт в тот же чат DeepSeek: он выдаст варианты и спросит ваш выбор.</li>
+          <li>Ответьте, какой вариант берёте и что уточняете (сумма, согласие клиента).</li>
+          <li>Вставьте итоговый ответ сюда и нажмите «Разобрать».</li>
+        </ol>
+        <div class="fieldlabel">Страницы инструкций в промте</div>
+        <div id="pages-list"></div>
+        <p><button class="next small" id="build-prompt" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-clip"/></svg>Собрать и скопировать промт</button> <span class="hint" id="prompt4-state" role="status"></span></p>
+        <details class="inner"><summary>Показать промт</summary><pre id="prompt4-text"></pre></details>
+        <label style="margin-top:14px">Итоговый ответ DeepSeek
+          <textarea id="answer4" placeholder="ЧЕКЛИСТ:&#10;СООБЩЕНИЕ:&#10;КОММЕНТАРИЙ:"></textarea>
+        </label>
+        <button class="next" id="parse4" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>Разобрать ответ</button>
+      </div>
+    </details>
+    <p class="hint msg" id="parse4-msg" role="status"></p>
+    <div class="fields">
+      <div class="outbox"><label>Чеклист<textarea id="out-check"></textarea></label><button class="next small cp" data-for="out-check" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-copy"/></svg><span>Копировать</span></button></div>
+      <div class="outbox"><label>Ответ клиенту в чате<textarea id="out-reply"></textarea></label><button class="next small cp" data-for="out-reply" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-copy"/></svg><span>Копировать</span></button></div>
+      <div class="outbox"><label>Комментарий в тикете<textarea id="out-comment"></textarea></label><button class="next small cp" data-for="out-comment" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-copy"/></svg><span>Копировать</span></button></div>
+      <p class="hint" id="ph-note"></p>
+    </div>
+    <div class="actions">
+      <button class="next" id="next-4" type="button">Далее к блоку «Запись кейса»<svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-next"/></svg></button>
+    </div>
+  </section>
+
+  <!-- ШАГ 5 -->
+  <section class="step" id="step-5" hidden>
+    <h2><button type="button" class="linkbtn" data-n="5">Шаг 5. Запись кейса<span class="backicon"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-back"/></svg></span></button></h2>
+    <p class="task">Проверьте карточку кейса перед отправкой в архив. Личные данные автоматически обезличиваются.</p>
+
+    <div class="fields">
+      <label for="case-title">Ёмкий заголовок кейса
+        <input type="text" id="case-title" placeholder="Краткая суть: например, «Задержка экспресс-доставки: компенсация баллами без возврата»" autocomplete="off">
+      </label>
+      <label for="what-worked">Что сработало (или что сделали бы иначе)
+        <textarea id="what-worked" placeholder="Например: помогло сразу сослаться на пункт 3 Памятки и предложить компенсацию..."></textarea>
+      </label>
+      <label for="qc-comments">Комментарии от Quality Check департамента
+        <textarea id="qc-comments" placeholder="Оценка качества разбора, соблюдение стандартов Tone of Voice и Памятки, рекомендации..."></textarea>
+      </label>
+    </div>
+
+    <div class="fieldlabel" style="margin-top:16px">Предпросмотр карточки кейса</div>
+    <div id="case-preview"></div>
+
+    <div class="actions" style="margin-top:18px">
+      <button class="next pri" id="save-case-btn" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>Записать кейс в operator-data</button>
+      <p class="hint msg" id="save-case-msg" role="status"></p>
+    </div>
+  </section>
+
+  <div class="bottom-bar">
+    <button class="reset" id="reset" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-reset"/></svg>Начать новую претензию</button>
+    <button class="reset" id="load-case-btn" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-download"/></svg>Загрузить сохранённый кейс</button>
+  </div>
+</main>
+
+<!-- Модальное окно загрузки сохранённого кейса -->
+<div class="modal-overlay" id="case-modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-head">
+      <h3 id="modal-title">Загрузить сохранённый кейс</h3>
+      <button class="modal-close-btn" id="modal-close" type="button" aria-label="Закрыть">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="hint" style="margin:0 0 10px;">Выберите кейс из архива operator-data для загрузки в форму:</p>
+      <input type="text" id="modal-search" placeholder="Поиск по названию кейса, тикету, заказу…" autocomplete="off">
+      <ul class="modal-list" id="modal-case-list">
+        <li class="hint" style="padding:10px;">Загрузка списка кейсов…</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно подтверждения начала новой претензии -->
+<div class="modal-overlay" id="reset-confirm-modal" hidden>
+  <div class="modal-card" style="max-width:480px" role="dialog" aria-modal="true" aria-labelledby="reset-modal-title">
+    <div class="modal-head">
+      <h3 id="reset-modal-title">Начать новую претензию?</h3>
+      <button class="modal-close-btn" id="reset-modal-close" type="button" aria-label="Закрыть">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin:0 0 10px;font-size:14px;line-height:1.5;">Все введённые данные и текущий черновик будут очищены, а форма вернётся к шагу 1.</p>
+      <p class="hint er" id="reset-modal-warning" style="margin:0;padding:8px 10px;border-left:3px solid var(--er);background:var(--field);border-radius:0 6px 6px 0;font-size:13px;" hidden>
+        ⚠️ Внимание: текущий разбор ещё не был записан в архив operator-data.
+      </p>
+    </div>
+    <div class="modal-actions" style="display:flex;gap:10px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--line);background:var(--field);">
+      <button class="reset" id="reset-modal-cancel" type="button">Отмена</button>
+      <button class="next small pri" id="reset-modal-confirm" type="button" style="background:linear-gradient(180deg,#c0392b,#a9281a);border-color:#a9281a;">
+        <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-reset"/></svg>
+        Очистить и начать заново
+      </button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

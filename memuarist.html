@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Историк — Архив кейсов</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,6 91,29 50,52 9,29' fill='%237ee0e8'/%3E%3Cpolygon points='9,29 50,52 50,95 9,72' fill='%2310a3b2'/%3E%3Cpolygon points='91,29 50,52 50,95 91,72' fill='%230a7482'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/hero.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/steps.css">
+<style>
+  .cases-layout { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 14px; }
+  @media (min-width: 800px) {
+    .cases-layout { grid-template-columns: 320px 1fr; align-items: start; }
+  }
+  .case-sidebar { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; box-shadow: var(--sh); }
+  .case-list { list-style: none; padding: 0; margin: 12px 0 0; max-height: 600px; overflow-y: auto; }
+  .case-item { padding: 12px; border-radius: 8px; border: 1px solid var(--line); margin-bottom: 8px; cursor: pointer; transition: background .15s, border-color .15s; background: var(--field); }
+  .case-item:hover { background: var(--info); border-color: var(--ac); }
+  .case-item.active { background: var(--info); border-color: var(--ac); box-shadow: 0 0 0 1px var(--ac); }
+  .case-item-title { font-weight: 700; font-size: 14px; color: var(--ink); display: flex; justify-content: space-between; align-items: center; }
+  .case-item-sub { font-size: 12px; color: var(--soft); margin-top: 4px; }
+  .case-item-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+  .tag { font-size: 11px; padding: 2px 6px; border-radius: 4px; background: var(--card); border: 1px solid var(--line); color: var(--soft); }
+  .case-detail { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px 24px; box-shadow: var(--sh); min-height: 400px; }
+  .crm-bar { background: var(--info); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; }
+  .crm-links { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+  .crm-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 6px; background: var(--card); border: 1px solid var(--ac); color: var(--ac); text-decoration: none; font-weight: 600; font-size: 13px; }
+  .crm-badge:hover { background: var(--ac); color: #fff; }
+  .worked-box { background: rgba(28, 138, 99, 0.08); border-left: 4px solid var(--good); border-radius: 6px; padding: 12px 14px; margin: 14px 0; font-size: 14px; line-height: 1.5; }
+  .worked-box strong { color: var(--good); display: block; margin-bottom: 4px; }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--soft); }
+  .empty-state svg { width: 44px; height: 44px; color: var(--soft); margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="hero-top">
+    <span class="sync-badge off" id="conn-sum">не подключено</span>
+    <button class="settings-btn" id="settingsBtn" type="button" title="Настройки подключения" aria-label="Настройки подключения">⚙</button>
+  </div>
+  <nav class="roles" aria-label="Роли">
+    <a class="role side" href="librarian.html" title="Библиотекарь: кэш документации">
+      <svg class="rico" aria-hidden="true" focusable="false"><use href="assets/icons.svg#ic-librarian"/></svg>
+      <span class="rname">Библиотекарь</span>
+    </a>
+    <a class="role side" href="index2.html" title="Проводник по претензии">
+      <svg class="rico" aria-hidden="true" focusable="false"><use href="assets/icons.svg#ic-guide"/></svg>
+      <span class="rname">Проводник</span>
+    </a>
+    <div class="role main" aria-current="page">
+      <svg class="rico" aria-hidden="true" focusable="false"><use href="assets/icons.svg#ic-historian"/></svg>
+      <h1>Историк</h1>
+      <p>Архив кейсов, проверенные решения и статистика по темам.</p>
+    </div>
+  </nav>
+</header>
+
+<main class="app">
+  <div class="settings-panel" id="conn">
+    <h3>Подключение к GitHub и CRM</h3>
+    <p>Токен и адрес CRM хранятся только в вашем браузере (localStorage). Для чтения архива нужен токен с доступом к репозиторию operator-data.</p>
+    <div class="settings-grid">
+      <div><label for="c-owner">Владелец (логин GitHub)</label><input type="text" id="c-owner" autocomplete="off" placeholder="katekitaeva"></div>
+      <div><label for="c-repo">Репозиторий</label><input type="text" id="c-repo" value="operator-data" autocomplete="off"></div>
+      <div><label for="c-branch">Ветка</label><input type="text" id="c-branch" value="main" autocomplete="off"></div>
+      <div><label for="c-crm">Хост CRM (для ссылок)</label><input type="url" id="c-crm" placeholder="https://crm.company.ru" autocomplete="off"></div>
+      <div class="settings-full"><label for="c-token">Токен (Fine-grained, Contents: Read and write)</label><input type="password" id="c-token" autocomplete="off" placeholder="github_pat_..."></div>
+    </div>
+    <div class="btns" style="margin-top:0">
+      <button class="next small pri" id="c-save" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-plug"/></svg>Сохранить и проверить</button>
+      <button class="next small" id="c-forget" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-trash"/></svg>Забыть токен</button>
+    </div>
+    <p class="hint msg" id="c-msg" role="status"></p>
+  </div>
+
+  <section>
+    <div class="row" style="align-items:center;margin-bottom:12px;">
+      <h2 style="margin:0;flex:1;">Архив разобранных кейсов</h2>
+      <div id="manifest-count" class="hint" style="margin:0;font-weight:600;">Загрузка архива…</div>
+    </div>
+
+    <div class="row" style="gap:10px;margin-bottom:12px;">
+      <div style="flex:2 1 240px;">
+        <input type="text" id="search-input" placeholder="Поиск по номеру тикета, заказу или тексту проблемы…" autocomplete="off">
+      </div>
+      <div style="flex:1 1 180px;">
+        <select id="theme-filter">
+          <option value="">Все темы</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="cases-layout">
+      <!-- Список кейсов -->
+      <aside class="case-sidebar">
+        <div style="font-weight:700;font-size:13px;color:var(--soft);text-transform:uppercase;">Список кейсов</div>
+        <ul class="case-list" id="case-list">
+          <li class="hint">Загрузка карточек…</li>
+        </ul>
+      </aside>
+
+      <!-- Детальная карточка выбранного кейса -->
+      <article class="case-detail" id="case-detail">
+        <div class="empty-state">
+          <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-info"/></svg>
+          <div style="font-size:16px;font-weight:600;margin-bottom:6px;">Выберите кейс из списка слева</div>
+          <p class="hint">Здесь откроются детали, темы, вердикт Памятки, что сработало и прямые ссылки на CRM.</p>
+        </div>
+      </article>
+    </div>
+  </section>
+</main>
+
+<script type="module">
+import { CONN_KEY, CRM_TABS } from "./js/config.js";
+import { $, val } from "./js/ui.js";
+import { savedOrigin, rememberOrigin } from "./js/crm.js";
+import { conn, ghGet, connSummary, initConnection } from "./js/github.js";
+
+let MANIFEST = { cases: [] };
+let SELECTED_CASE = null;
+let ALL_CASES = [];
+
+// Инициализация полей настроек CRM
+function initCrmSetting() {
+  const crmInput = $("c-crm");
+  if (crmInput) {
+    crmInput.value = savedOrigin() || "";
+    crmInput.addEventListener("change", () => {
+      const v = crmInput.value.trim().replace(/\/+$/, "");
+      if (v) rememberOrigin(v);
+    });
+  }
+}
+
+// Загрузка манифеста кейсов из operator-data
+async function loadManifest() {
+  const countEl = $("manifest-count");
+  const listEl = $("case-list");
+  const c = conn();
+
+  if (!c || !c.token) {
+    countEl.textContent = "Требуется подключение к operator-data";
+    listEl.innerHTML = `<li class="hint" style="padding:14px;">Откройте настройки (⚙) и введите токен для подключения к operator-data.</li>`;
+    return;
+  }
+
+  countEl.textContent = "Загружаю cases/manifest.json…";
+
+  try {
+    const raw = await ghGet("cases/manifest.json");
+    MANIFEST = JSON.parse(raw);
+    ALL_CASES = MANIFEST.cases || [];
+    countEl.textContent = `Кейсов в архиве: ${ALL_CASES.length}`;
+    populateThemeFilter(ALL_CASES);
+    renderCaseList();
+    if (ALL_CASES.length > 0) {
+      loadCaseDetail(ALL_CASES[0]);
+    } else {
+      showEmptyArchive();
+    }
+  } catch (e) {
+    // Если манифест ещё не создан, пробуем прочитать файлы из cases/ или показать понятное сообщение
+    console.warn("Manifest load error:", e);
+    countEl.textContent = "Архив пуст или cases/manifest.json ещё не создан";
+    listEl.innerHTML = `
+      <li class="hint" style="padding:14px;line-height:1.5;">
+        Файл <code>cases/manifest.json</code> ещё не создан в репозитории.<br><br>
+        После записи кейсов на шаге 5 они сохраняются в папку <code>inbox/cases/</code>, откуда скрипт в operator-data переносит их в архив и собирает манифест.
+      </li>
+    `;
+  }
+}
+
+function showEmptyArchive() {
+  $("case-list").innerHTML = `<li class="hint" style="padding:14px;">Архив пуст. Запишите первый кейс на странице «Проводник».</li>`;
+  $("case-detail").innerHTML = `
+    <div class="empty-state">
+      <svg aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-info"/></svg>
+      <div style="font-size:16px;font-weight:600;margin-bottom:6px;">В архиве пока нет сохранённых кейсов</div>
+      <p class="hint">Перейдите в <a href="index2.html">Проводник по претензии</a>, разберите обращение и запишите карточку на шаге 5.</p>
+    </div>
+  `;
+}
+
+function populateThemeFilter(cases) {
+  const sel = $("theme-filter");
+  const themes = new Set();
+  cases.forEach(c => {
+    (c.themes || []).forEach(t => {
+      const p = typeof t === "string" ? t : t.path;
+      if (p) themes.add(p);
+    });
+  });
+  sel.innerHTML = `<option value="">Все темы (${themes.size})</option>`;
+  [...themes].sort().forEach(t => {
+    const opt = document.createElement("option");
+    opt.value = t;
+    opt.textContent = t;
+    sel.appendChild(opt);
+  });
+}
+
+function renderCaseList() {
+  const listEl = $("case-list");
+  listEl.innerHTML = "";
+
+  const query = val("search-input").toLowerCase().trim();
+  const selectedTheme = val("theme-filter");
+
+  const filtered = ALL_CASES.filter(c => {
+    if (selectedTheme) {
+      const matchTheme = (c.themes || []).some(t => (typeof t === "string" ? t : t.path) === selectedTheme);
+      if (!matchTheme) return false;
+    }
+    if (query) {
+      const hay = [
+        c.ticket || "",
+        c.order || "",
+        c.problem || "",
+        c.demand || "",
+        c.whatWorked || "",
+        ...(c.themes || []).map(t => typeof t === "string" ? t : (t.path + " " + (t.note || "")))
+      ].join(" ").toLowerCase();
+      if (!hay.includes(query)) return false;
+    }
+    return true;
+  });
+
+  if (!filtered.length) {
+    listEl.innerHTML = `<li class="hint" style="padding:14px;">Кейсов по заданному фильтру не найдено.</li>`;
+    return;
+  }
+
+  filtered.forEach(c => {
+    const li = document.createElement("li");
+    li.className = "case-item" + (SELECTED_CASE && SELECTED_CASE.id === c.id ? " active" : "");
+    const title = c.title ? `«${c.title}»` : (c.ticket ? `Тикет #${c.ticket}` : c.order ? `Заказ ${c.order}` : "Кейс");
+    const date = c.date || "—";
+    const problemSnippet = (c.problem || "").slice(0, 75) + (c.problem && c.problem.length > 75 ? "…" : "");
+
+    const tagsHtml = (c.themes || []).slice(0, 2).map(t => {
+      const p = typeof t === "string" ? t : t.path;
+      const short = p ? p.split(" > ").pop() : "";
+      return `<span class="tag" title="${p}">${short}</span>`;
+    }).join("");
+
+    li.innerHTML = `
+      <div class="case-item-title">
+        <span>${title}</span>
+        <span class="hint" style="font-size:11px;">${date}</span>
+      </div>
+      <div class="case-item-sub">${problemSnippet || "Без описания проблемы"}</div>
+      <div class="case-item-tags">${tagsHtml}</div>
+    `;
+
+    li.addEventListener("click", () => {
+      document.querySelectorAll(".case-item").forEach(el => el.classList.remove("active"));
+      li.classList.add("active");
+      loadCaseDetail(c);
+    });
+
+    listEl.appendChild(li);
+  });
+}
+
+// Загрузка и показ деталей кейса
+async function loadCaseDetail(item) {
+  SELECTED_CASE = item;
+  const detailEl = $("case-detail");
+
+  // Если в манифесте только метаданные, загрузим полный файл кейса
+  let card = item;
+  if (item.file && (!item.verdict || !item.outcome)) {
+    try {
+      const raw = await ghGet(`cases/${item.file}`);
+      card = { ...item, ...JSON.parse(raw) };
+    } catch (e) {
+      console.warn("Could not fetch full case file:", e);
+    }
+  }
+
+  const origin = savedOrigin();
+  const ticket = card.ticket || "";
+  const order = card.order || "";
+  const clientId = card.clientId || "";
+
+  // Сборка CRM ссылок
+  const ticketHref = origin && ticket && /^\d+$/.test(ticket) ? `${origin}/tickets/${ticket}` : null;
+  const orderHref = origin && clientId && order ? `${origin}/clients/${encodeURIComponent(clientId)}/orders/${order}` : null;
+  const clientBaseHref = origin && clientId ? `${origin}/clients/${encodeURIComponent(clientId)}` : null;
+
+  let crmBarHtml = "";
+  if (!origin) {
+    crmBarHtml = `
+      <div class="crm-bar" style="border-left:4px solid var(--wr);">
+        <strong style="color:var(--wr);">Хост CRM не сохранён в этом браузере</strong>
+        <p class="hint" style="margin:4px 0 8px;">Чтобы активировать прямые ссылки на тикет, заказ и карточку клиента, укажите адрес вашей CRM:</p>
+        <div style="display:flex;gap:8px;">
+          <input type="url" id="quick-crm" placeholder="https://crm.company.ru" value="" style="flex:1;">
+          <button class="next small" id="quick-crm-save" type="button">Сохранить</button>
+        </div>
+      </div>
+    `;
+  } else {
+    crmBarHtml = `
+      <div class="crm-bar">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <strong style="font-size:13px;color:var(--soft);">Ссылки на CRM (${origin})</strong>
+          ${clientId ? `<span class="tag">ID клиента: ${clientId}</span>` : `<span class="tag" style="color:var(--wr);">ID клиента не сохранён</span>`}
+        </div>
+        <div class="crm-links">
+          ${ticketHref ? `<a class="crm-badge" href="${ticketHref}" target="_blank" rel="noopener">Тикет #${ticket} ↗</a>` : ticket ? `<span class="tag">Тикет: ${ticket}</span>` : ""}
+          ${orderHref ? `<a class="crm-badge" href="${orderHref}" target="_blank" rel="noopener">Заказ ${order} ↗</a>` : order ? `<span class="tag">Заказ: ${order}</span>` : ""}
+          ${clientBaseHref ? `<a class="crm-badge" href="${clientBaseHref}" target="_blank" rel="noopener">Карточка клиента ↗</a>` : ""}
+          ${clientBaseHref ? CRM_TABS.slice(1, 4).map(([name, path]) => `<a class="crm-badge" style="font-size:12px;font-weight:400;" href="${clientBaseHref}/${path}" target="_blank" rel="noopener">${name} ↗</a>`).join("") : ""}
+        </div>
+      </div>
+    `;
+  }
+
+  const themesHtml = (card.themes || []).map(t => {
+    const p = typeof t === "string" ? t : t.path;
+    const st = typeof t === "string" ? "" : t.status;
+    const nt = typeof t === "string" ? "" : t.note;
+    return `
+      <div style="padding:6px 0;border-bottom:1px solid var(--line);">
+        <strong>${p}</strong> ${st ? `<span class="tag">${st}</span>` : ""}
+        ${nt ? `<div class="hint" style="margin-top:2px;">Обоснование: ${nt}</div>` : ""}
+      </div>
+    `;
+  }).join("") || "<span class=\"hint\">Темы не указаны</span>";
+
+  const whatWorkedHtml = card.whatWorked ? `
+    <div class="worked-box">
+      <strong>💡 Что сработало:</strong>
+      ${card.whatWorked}
+    </div>
+  ` : "";
+
+  const qcHtml = card.qcComments ? `
+    <div class="worked-box" style="background:rgba(14,135,150,0.08);border-left-color:var(--ac);">
+      <strong style="color:var(--ac);">🔍 Комментарии Quality Check:</strong>
+      ${card.qcComments}
+    </div>
+  ` : "";
+
+  const themeVer = card.themesVersion ? `
+    <div class="hint" style="margin-top:14px;font-size:12px;">
+      Версия справочника тем: ${card.themesVersion.date || "без даты"} (хэш <code>${card.themesVersion.hash || "—"}</code>)
+    </div>
+  ` : "";
+
+  detailEl.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+      <div>
+        <h2 style="margin:0 0 4px;">${card.title ? `«${card.title}»` : (ticket ? "Тикет #" + ticket : "Заказ " + (order || "Кейс"))}</h2>
+        <div class="hint" style="margin:0;">
+          ${ticket ? `Тикет #${ticket}` : ""} ${order ? `· Заказ ${order}` : ""} · Дата: ${card.date || "—"}
+        </div>
+      </div>
+      <button class="next small" id="copy-case-btn" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-copy"/></svg><span>Копировать JSON</span></button>
+    </div>
+
+    ${crmBarHtml}
+    ${whatWorkedHtml}
+    ${qcHtml}
+
+    <div style="margin-bottom:14px;">
+      <div class="fieldlabel">Темы обращения:</div>
+      ${themesHtml}
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <div class="fieldlabel">Суть проблемы:</div>
+      <div class="sumcard" style="margin:4px 0 0;">${card.problem || "—"}</div>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <div class="fieldlabel">Требование клиента:</div>
+      <div class="sumcard" style="margin:4px 0 0;">${card.demand || "—"}</div>
+      ${card.demandChanged ? `<div class="hint">Требование менялось: ${card.demandChanged}</div>` : ""}
+      ${card.legal ? `<div class="hint">Юридические упоминания: ${card.legal}</div>` : ""}
+    </div>
+
+    ${card.verdict ? `
+      <div style="margin-bottom:14px;">
+        <div class="fieldlabel">Вердикт по Памятке Loyalty:</div>
+        <div class="verdict" style="margin:4px 0 0;">${card.verdict}</div>
+      </div>
+    ` : ""}
+
+    ${card.outcome ? `
+      <div style="margin-bottom:14px;">
+        <div class="fieldlabel">Итоговые материалы:</div>
+        ${card.outcome.check ? `<label style="margin-top:6px;font-size:12px;">Чеклист:<pre>${card.outcome.check}</pre></label>` : ""}
+        ${card.outcome.comment ? `<label style="margin-top:6px;font-size:12px;">Комментарий в тикет:<pre>${card.outcome.comment}</pre></label>` : ""}
+      </div>
+    ` : ""}
+
+    ${themeVer}
+
+    <details class="inner" style="margin-top:16px;">
+      <summary>Полный исходный JSON кейса</summary>
+      <pre>${JSON.stringify(card, null, 2)}</pre>
+    </details>
+  `;
+
+  // Навешиваем обработчик на быстрое сохранение CRM хоста
+  const qBtn = $("quick-crm-save");
+  if (qBtn) {
+    qBtn.addEventListener("click", () => {
+      const v = $("quick-crm").value.trim().replace(/\/+$/, "");
+      if (v) {
+        rememberOrigin(v);
+        loadCaseDetail(card);
+      }
+    });
+  }
+
+  // Копирование JSON
+  const cpBtn = $("copy-case-btn");
+  if (cpBtn) {
+    cpBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(JSON.stringify(card, null, 2));
+        const lb = cpBtn.querySelector("span");
+        lb.textContent = "Скопировано!";
+        setTimeout(() => { lb.textContent = "Копировать JSON"; }, 1500);
+      } catch (e) {}
+    });
+  }
+}
+
+// Запуск при старте
+initConnection();
+initCrmSetting();
+connSummary();
+loadManifest();
+
+$("search-input").addEventListener("input", renderCaseList);
+$("theme-filter").addEventListener("change", renderCaseList);
+document.addEventListener("operator:changed", () => {
+  connSummary();
+  loadManifest();
+});
+</script>
+</body>
+</html>
