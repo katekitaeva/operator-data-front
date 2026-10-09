@@ -81,6 +81,22 @@
               <label for="helper-client-url">Адрес карточки клиента в CRM (или ID клиента) 👤</label>
               <input type="text" id="helper-client-url" placeholder="https://crm.o3team.ru/clients/aynapnnk" autocomplete="off">
             </div>
+            <div id="helper-ticket-found-banner" class="ticket-found-banner" style="display:none;grid-column:1/-1;" role="region" aria-live="polite">
+              <div class="ticket-found-content">
+                <span class="ticket-found-icon">📂</span>
+                <div class="ticket-found-info">
+                  <div class="ticket-found-title">Найден сохранённый кейс: <strong id="helper-ticket-found-title">«Заголовок кейса»</strong></div>
+                  <div class="ticket-found-desc">В базе уже есть сохранённый кейс с этим тикетом. Загрузить его в форму?</div>
+                </div>
+              </div>
+              <div class="ticket-found-actions">
+                <button type="button" class="next small pri" id="btn-helper-load-found-ticket">
+                  <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-download"/></svg>
+                  Загрузить кейс
+                </button>
+                <button type="button" class="reset small" id="btn-helper-dismiss-found-ticket">Отказаться</button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -209,6 +225,22 @@
             <input type="text" id="client-url" autocomplete="off" placeholder="например: aynapnnk">
           </div>
         </div>
+        <div class="ticket-found-banner" id="ticket-found-banner" style="display:none;" role="region" aria-live="polite">
+          <div class="ticket-found-content">
+            <span class="ticket-found-icon">📂</span>
+            <div class="ticket-found-info">
+              <div class="ticket-found-title">Найден сохранённый кейс: <strong id="ticket-found-title">«Заголовок кейса»</strong></div>
+              <div class="ticket-found-desc">В базе сохранённых кейсов уже есть этот тикет. Загрузить этот кейс в форму?</div>
+            </div>
+          </div>
+          <div class="ticket-found-actions">
+            <button type="button" class="next small pri" id="btn-load-found-ticket">
+              <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-download"/></svg>
+              Загрузить кейс
+            </button>
+            <button type="button" class="reset small" id="btn-dismiss-found-ticket">Отказаться</button>
+          </div>
+        </div>
         <p class="hint msg" id="client-url-msg" role="status" style="margin:8px 0 0;"></p>
       </div>
 
@@ -223,8 +255,8 @@
         </div>
         <div class="step1-row2">
           <div>
-            <label for="problem">Суть проблемы (хронология, факты без домыслов)</label>
-            <textarea id="problem" rows="4" placeholder="Опишите фактическую ситуацию: что заказано, что пошло не так, кто виноват..."></textarea>
+            <label for="problem">Суть проблемы</label>
+            <textarea id="problem" rows="4" placeholder="В чём суть проблемы: что произошло, какой сбой произошёл (кратко, 2-4 предложения, без поминутной хронологии)…"></textarea>
           </div>
           <div>
             <label for="demand">Требование клиента (чего конкретно добивается)</label>

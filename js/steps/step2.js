@@ -12,7 +12,7 @@ import { THEMES_PATH, THEME_RULES_PATH } from "../config.js";
 // значок (DR) при сравнении путей не учитывается: DeepSeek может его опустить
 const norm = x => x.toLowerCase().replace(/\s*\(dr\)/g, "").replace(/\s+/g, " ").trim();
 let TYPES = [], TYPE_MAP = {}, TYPE_LINES = [], SOURCE = null, RULES = "", RULES_DATE = "";
-const sels = ["t1", "t2", "t3"].map(id => document.getElementById(id));
+const sels = typeof document !== "undefined" ? ["t1", "t2", "t3"].map(id => document.getElementById(id)) : [];
 
 /* ---------- Сводка шага 1 ---------- */
 export function renderSummary() {

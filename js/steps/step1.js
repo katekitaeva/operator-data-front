@@ -6,8 +6,11 @@ import { save, state } from "../state.js";
 import { goTo, onRender } from "../nav.js";
 import { parseAnswer, NAMES } from "../parser.js";
 import { parseClientUrl, rememberOrigin, updateCrmBar } from "../crm.js";
+import { getArchiveCases, loadCaseByFile } from "../case-loader.js";
 
 let promptTemplate = "";
+let dismissedTicket = null;
+let ticketCheckTimer = null;
 
 export function currentLocalDatetime() {
   const d = new Date();
@@ -26,15 +29,107 @@ export function updateClientUrlMsg() {
   msg.textContent = ref.clientId ? "Ссылки на тикет и заказ включены." : "Ссылка на тикет включена. В адресе нет /clients/…, поэтому ссылка на заказ не строится.";
 }
 
-/** Автоматическое сворачивание помощника при заполненном номере тикета и ответа */
-export function updateHelperVisibility() {
-  const helper = $("helper");
-  if (!helper) return;
-  const hasTicket = !!($("ticket")?.value || "").trim();
-  const hasProblem = !!($("problem")?.value || "").trim();
-  if (hasTicket && hasProblem) {
-    helper.open = false;
+/** Сброс состояния проверки тикета в архиве (вызывается при начале новой претензии) */
+export function resetTicketArchiveCheck() {
+  dismissedTicket = null;
+  clearTimeout(ticketCheckTimer);
+  const b1 = $("ticket-found-banner");
+  if (b1) b1.style.display = "none";
+  const b2 = $("helper-ticket-found-banner");
+  if (b2) b2.style.display = "none";
+}
+
+/** Проверка, есть ли введённый номер тикета в базе сохранённых кейсов */
+export async function checkTicketInArchive(rawTicket) {
+  const clean = (rawTicket || "").trim();
+  const b1 = $("ticket-found-banner");
+  const b2 = $("helper-ticket-found-banner");
+  const t1 = $("ticket-found-title");
+  const t2 = $("helper-ticket-found-title");
+
+  const hideBanners = () => {
+    if (b1) b1.style.display = "none";
+    if (b2) b2.style.display = "none";
+  };
+
+  if (!clean || clean.length < 3) {
+    hideBanners();
+    return;
   }
+
+  // Если этот кейс уже загружен сейчас в форму, повторно не предлагаем
+  if (state.loadedCase && String(state.loadedCase.ticket || "").trim() === clean) {
+    hideBanners();
+    return;
+  }
+
+  // Если оператор уже отказался от загрузки этого конкретного номера
+  if (dismissedTicket === clean) {
+    hideBanners();
+    return;
+  }
+
+  const cases = await getArchiveCases();
+  if (!cases || !cases.length) {
+    hideBanners();
+    return;
+  }
+
+  const found = cases.find(c => {
+    const ct = String(c.ticket || "").trim();
+    return ct && ct === clean;
+  });
+
+  if (!found) {
+    hideBanners();
+    return;
+  }
+
+  let caseTitle = (found.title || "").trim();
+  if (!caseTitle) {
+    caseTitle = found.order ? `Заказ ${found.order}` : `Тикет #${found.ticket}`;
+  }
+
+  if (t1) t1.textContent = `«${caseTitle}»`;
+  if (t2) t2.textContent = `«${caseTitle}»`;
+
+  if (b1) b1.style.display = "flex";
+  if (b2) b2.style.display = "flex";
+
+  const handleLoad = async () => {
+    hideBanners();
+    try {
+      await loadCaseByFile(found.file);
+      const parseMsg = $("parse-msg");
+      if (parseMsg) {
+        parseMsg.className = "hint msg ok";
+        parseMsg.textContent = `Кейс «${caseTitle}» успешно загружен из архива!`;
+      }
+    } catch (e) {
+      alert(`Ошибка при загрузке кейса: ${e.message}`);
+    }
+  };
+
+  const handleDismiss = () => {
+    dismissedTicket = clean;
+    hideBanners();
+  };
+
+  const btnLoad = $("btn-load-found-ticket");
+  const btnDismiss = $("btn-dismiss-found-ticket");
+  const btnHelperLoad = $("btn-helper-load-found-ticket");
+  const btnHelperDismiss = $("btn-helper-dismiss-found-ticket");
+
+  if (btnLoad) btnLoad.onclick = handleLoad;
+  if (btnHelperLoad) btnHelperLoad.onclick = handleLoad;
+  if (btnDismiss) btnDismiss.onclick = handleDismiss;
+  if (btnHelperDismiss) btnHelperDismiss.onclick = handleDismiss;
+}
+
+/** Автоматическое сворачивание помощника (только при явном разборе ответа) */
+export function updateHelperVisibility() {
+  // Намеренно не сворачиваем помощник автоматически при навигации:
+  // оператору требуется открытый помощник на новом разборе
 }
 
 export function calcLoyaltyNorms() {
@@ -232,24 +327,41 @@ export function initStep1() {
     save();
   });
 
-  // Синхронизация номера тикета
+  // Синхронизация номера тикета и мгновенная проверка в архиве кейсов
   const ticketInput = $("ticket");
   const helperTicket = $("helper-ticket");
   if (ticketInput && helperTicket) {
     if (ticketInput.value && !helperTicket.value) helperTicket.value = ticketInput.value;
     else if (helperTicket.value && !ticketInput.value) ticketInput.value = helperTicket.value;
 
+    const onTicketChange = (val) => {
+      if (dismissedTicket && dismissedTicket !== val.trim()) {
+        dismissedTicket = null;
+      }
+      clearTimeout(ticketCheckTimer);
+      ticketCheckTimer = setTimeout(() => {
+        checkTicketInArchive(val);
+      }, 250);
+    };
+
     ticketInput.addEventListener("input", () => {
       helperTicket.value = ticketInput.value;
       updatePromptPreview();
       updateCrmBar();
+      onTicketChange(ticketInput.value);
     });
     helperTicket.addEventListener("input", () => {
       ticketInput.value = helperTicket.value;
       updatePromptPreview();
       updateCrmBar();
       save();
+      onTicketChange(helperTicket.value);
     });
+
+    // Первичная проверка, если номер уже есть в поле
+    if (ticketInput.value) {
+      setTimeout(() => checkTicketInArchive(ticketInput.value), 400);
+    }
   }
 
   // Синхронизация адреса/ID клиента

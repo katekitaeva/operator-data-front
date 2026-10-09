@@ -204,6 +204,101 @@ p.hint.msg.er{border-left-color:var(--er);background:var(--card);color:var(--er)
 .step1-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 @media (max-width: 760px) { .step1-row1 { grid-template-columns: 1fr; } .step1-row2 { grid-template-columns: 1fr; } }
 
+/* Увеличенный шрифт и повышенный контраст для ключевых полей шага 1 */
+.step1-row2 label {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+.step1-row2 textarea#problem,
+.step1-row2 textarea#demand {
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--ink);
+  font-weight: 500;
+  min-height: 115px;
+  padding: 12px 14px;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 9px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.step1-row2 textarea#problem:focus,
+.step1-row2 textarea#demand:focus {
+  border-color: var(--ac);
+  box-shadow: 0 0 0 2px rgba(14, 135, 150, 0.18);
+  outline: none;
+}
+
+/* Баннер предложения загрузить сохранённый кейс из архива при совпадении тикета */
+.ticket-found-banner {
+  margin: 10px 0 6px;
+  padding: 12px 16px;
+  background: rgba(22, 104, 227, 0.08);
+  border: 1.5px solid rgba(22, 104, 227, 0.45);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  animation: ticketBannerFade 0.2s ease-in-out;
+}
+@keyframes ticketBannerFade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ticket-found-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 240px;
+}
+.ticket-found-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.ticket-found-info {
+  flex: 1;
+  min-width: 0;
+}
+.ticket-found-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1668e3;
+  margin-bottom: 2px;
+  line-height: 1.35;
+}
+.ticket-found-title strong {
+  color: var(--ink);
+}
+.ticket-found-desc {
+  font-size: 12.5px;
+  color: var(--ink);
+  line-height: 1.4;
+}
+.ticket-found-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.ticket-found-actions .next.small.pri {
+  background: #1668e3;
+  border-color: #1668e3;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+.ticket-found-actions .reset.small {
+  padding: 6px 10px;
+  font-size: 12.5px;
+}
+
 /* Блок лояльности */
 .loyalty-block { margin-top: 4px; }
 .loyalty-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }

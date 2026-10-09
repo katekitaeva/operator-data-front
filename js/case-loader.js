@@ -12,6 +12,41 @@ import { render, goTo } from "./nav.js";
 
 let casesList = [];
 
+/** Получение списка кейсов из архива (с кэшированием) */
+export async function getArchiveCases(forceReload = false) {
+  if (casesList.length > 0 && !forceReload) return casesList;
+  const c = conn();
+  if (!c || !c.token) return [];
+  try {
+    const raw = await ghGet("cases/manifest.json");
+    const data = JSON.parse(raw);
+    casesList = data.cases || [];
+    return casesList;
+  } catch (e) {
+    console.warn("Could not load archive cases:", e);
+    return [];
+  }
+}
+
+/** Загрузка кейса по имени файла в форму с перерисовкой всех шагов */
+export async function loadCaseByFile(fileName, targetStep = null) {
+  const rawFile = await ghGet(`cases/${fileName}`);
+  const fullCard = JSON.parse(rawFile);
+  loadCaseIntoForm(fullCard, fileName);
+  renderSummary();
+  renderThemes();
+  renderVerdict();
+  syncChecklistOut();
+  updPh();
+  updateClientUrlMsg();
+  render();
+  renderPreview();
+  if (targetStep) {
+    goTo(targetStep);
+  }
+  return fullCard;
+}
+
 export function initCaseLoader() {
   const btn = $("load-case-btn");
   const modal = $("case-modal");
@@ -31,9 +66,7 @@ export function initCaseLoader() {
       return;
     }
     try {
-      const raw = await ghGet("cases/manifest.json");
-      const data = JSON.parse(raw);
-      casesList = data.cases || [];
+      casesList = await getArchiveCases(true);
       renderModalList();
     } catch (e) {
       listEl.innerHTML = `<li class="hint" style="padding:10px;line-height:1.4;">Не удалось прочитать cases/manifest.json (${e.message}). Убедитесь, что архив кейсов инициализирован в репозитории.</li>`;
