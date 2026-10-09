@@ -99,7 +99,7 @@
             <div class="loyalty-metric-card">
               <div class="loyalty-metric-head">
                 <span class="loyalty-metric-label">Начисления (2 мес)</span>
-                <span class="norm-badge" id="badge-acc">В норме</span>
+                <span class="norm-badge ok" id="badge-acc" title="В норме (до 3 начислений)" aria-label="В норме">✓</span>
               </div>
               <input type="number" id="c-acc" placeholder="0" autocomplete="off" value="0" title="Норма до 3 начислений">
             </div>
@@ -114,7 +114,7 @@
             <div class="loyalty-metric-card">
               <div class="loyalty-metric-head">
                 <span class="loyalty-metric-label">Отмены, % (расчёт)</span>
-                <span class="norm-badge" id="badge-cancels">В норме</span>
+                <span class="norm-badge ok" id="badge-cancels" title="В норме (до 50% отмен)" aria-label="В норме">✓</span>
               </div>
               <div class="loyalty-metric-calc-val" id="calc-cancels-pct">0%</div>
             </div>
@@ -322,20 +322,29 @@
     <details class="helper" id="helper2" open>
       <summary><svg class="ds" aria-hidden="true" focusable="false"><use href="assets/icons.svg#ic-deepseek"/></svg><span>Помощник DeepSeek: темы</span></summary>
       <div class="body">
-        <p class="hint">Вставьте промт в тот же чат DeepSeek, где вы разбирали претензию на шаге 1. Текст чата заново вставлять не нужно. DeepSeek подберёт точные темы обращения по таксономии Ozon.</p>
-        <p><button class="next small" id="copy-prompt2" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-clip"/></svg>Скопировать промт step002</button> <span class="hint" id="prompt2-state" role="status"></span></p>
+        <p class="hint" style="line-height:1.5;">1. Скопируйте промт <b>step002</b> и отправьте в тот же чат DeepSeek, где вы разбирали претензию на шаге 1.<br>
+        2. Нейросеть спросит: <i>«Укажите, пожалуйста, какие темы уже добавлены в тикете в WebCRM? Если тем в тикете пока нет, ответьте: «нет».»</i><br>
+        3. Ответьте в чате: напишите <b>«нет»</b> либо перечислите темы из тикета. Нейросеть выдаст темы с флагами <b>«в тикете»</b> и <b>«добавлю я»</b>.<br>
+        4. Вставьте итоговый ответ нейросети в поле ниже и нажмите <b>«Разобрать ответ и добавить темы»</b>.</p>
+
+        <p><button class="next small pri" id="copy-prompt2" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-clip"/></svg>Скопировать промт step002</button> <span class="hint" id="prompt2-state" role="status"></span></p>
         <details class="inner"><summary>Показать текст промта</summary><pre id="prompt2-text"></pre></details>
-        <label style="margin-top:14px">Ответ DeepSeek
-          <textarea id="answer2" placeholder="ТЕМЫ:&#10;- Тема > Подтема > Уточнение | в тикете | обоснование..."></textarea>
+        <label style="margin-top:14px;font-weight:600;">Ответ DeepSeek
+          <textarea id="answer2" placeholder="ТЕМЫ:&#10;- Тема > Подтема > Уточнение | в тикете | обоснование...&#10;- Тема > Подтема > Уточнение | добавлю я | обоснование..."></textarea>
         </label>
-        <button class="next" id="parse2" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>Разобрать ответ и добавить темы</button>
+        <button class="next pri" id="parse2" type="button" style="margin-top:10px;"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>Разобрать ответ и добавить темы</button>
       </div>
     </details>
     <p class="hint msg" id="parse2-msg" role="status"></p>
 
     <div class="fields">
-      <div class="fieldlabel">Темы обращения</div>
-      <div class="orderline" id="theme-order"></div>
+      <div class="fieldlabel" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <span style="display:inline-flex;align-items:center;gap:8px;">
+          Темы обращения
+          <span class="theme-counter-badge" id="theme-counter-badge">Тем: 0</span>
+        </span>
+        <div class="orderline" id="theme-order" style="margin:0;"></div>
+      </div>
       <div class="themepick">
         <select id="t1" aria-label="Тип"></select>
         <select id="t2" aria-label="Подтип" hidden></select>
@@ -350,9 +359,10 @@
       <!-- Блок похожих кейсов из архива в аккордеоне (по умолчанию свернут) -->
       <details class="similar-cases-box" id="similar-cases-details">
         <summary style="cursor:pointer;padding:4px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-          <span style="font-weight:700;display:inline-flex;align-items:center;gap:6px;color:var(--ink);">
+          <span style="font-weight:700;display:inline-flex;align-items:center;gap:8px;color:var(--ink);">
             <svg class="i" aria-hidden="true" focusable="false" style="color:var(--ac);"><use href="assets/icons.svg#i-spark"/></svg>
             Похожие кейсы из базы (по темам обращения)
+            <span class="wip-pill">🚧 В разработке</span>
           </span>
           <button class="next small" id="copy-similar-digest" type="button" style="padding:4px 10px;font-size:12px;" title="Скопировать выжимку похожих кейсов для DeepSeek">
             <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-clip"/></svg>
@@ -360,7 +370,7 @@
           </button>
         </summary>
         <div style="margin-top:10px;">
-          <p class="hint" style="margin:2px 0 8px;">Короткая выдержка из manifest.json: темы, суть проблемы, вердикт и что сработало в похожих ситуациях.</p>
+          <p class="hint" style="margin:2px 0 8px;">Короткая выдержка из manifest.json: темы, суть проблемы, вердикт и что сработало в похожих ситуациях. <i>(Блок находится в разработке и будет доработан позже)</i>.</p>
           <div id="similar-cases-list" class="similar-list">
             <p class="hint" style="font-style:italic;margin:6px 0;">Добавьте темы обращения выше, чтобы найти похожие кейсы из архива.</p>
           </div>
@@ -372,40 +382,43 @@
     <div class="actions">
       <p class="error" id="err-2" role="alert"></p>
       <button class="next pri" id="next-2" type="button" style="width:100%;justify-content:center;padding:14px 20px;font-size:15px;background:#1668e3;">
-        Далее: Инструкции & правила
+        Далее: Правила и обоснование решения
         <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-next"/></svg>
       </button>
     </div>
   </section>
 
-  <!-- ШАГ 3: Инструкции & правила -->
-  <section class="step" id="step-3" hidden>
-    <div class="phase-card">
-      <div class="phase-card-left">
-        <div class="phase-card-icon">
-          <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>
+  <!-- ШАГ 3: Правила и обоснование решения -->
+  <section class="step step-wip-screen" id="step-3" hidden>
+    <!-- Системное уведомление о разработке экрана -->
+    <div class="system-wip-notice">
+      <div class="system-wip-icon">🚧</div>
+      <div class="system-wip-content">
+        <div class="system-wip-title">
+          Экран находится в разработке
+          <span class="wip-pill">WIP</span>
         </div>
-        <div class="phase-card-text">
-          <h2 class="phase-card-title">Фаза 3: Инструкции & правила Loyalty</h2>
-          <p class="phase-card-desc">Проверьте релевантные инструкции и правила применения перед переходом к формированию решения.</p>
-        </div>
+        <p class="system-wip-text">Цель этого шага — связать наши действия с инструкциями с сайта. Но как отбирать эти инструкции из библиотеки, пока непонятно.</p>
       </div>
-      <a href="" id="step3-memo-link" target="_blank" rel="noopener noreferrer" class="phase-card-btn">
-        <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-book"/></svg>
-        База Loyalty
-      </a>
     </div>
 
-    <div class="fields">
-      <div class="tablinks" id="tablinks"></div>
-      <div style="margin-bottom:16px;">
-        <div class="fieldlabel" style="font-weight:700;margin-bottom:6px;">Выбранные темы обращения:</div>
-        <div id="step3-themes"></div>
+    <div class="phase-card phase-card-wip">
+      <div class="phase-card-left">
+        <div class="phase-card-icon" style="background:#64748b;">
+          <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-book"/></svg>
+        </div>
+        <div class="phase-card-text">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;">
+            <h2 class="phase-card-title" style="margin:0;">Фаза 3: Правила и обоснование решения</h2>
+            <span class="wip-pill">В разработке</span>
+          </div>
+          <p class="phase-card-desc">Приоритет: 1) Инструкции команды Loyalty (приоритет); 2) Общие регламенты Ozon; 3) Индивидуальное решение / согласование с РГ. Любое решение оператора должно быть обосновано правилом или ссылкой на регламент.</p>
+        </div>
       </div>
-      <div>
-        <div class="fieldlabel" style="font-weight:700;margin-bottom:6px;">Вердикт по критериям Памятки:</div>
-        <pre id="step3-verdict" class="verdict-pre"></pre>
-      </div>
+      <a href="https://customer-support-help.o3t.ru/" id="step3-memo-link" target="_blank" rel="noopener noreferrer" class="phase-card-btn" title="База знаний Libra">
+        <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-book"/></svg>
+        Libra
+      </a>
     </div>
 
     <div class="actions" style="margin-top:20px;">
@@ -424,43 +437,72 @@
           <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>
         </div>
         <div class="phase-card-text">
-          <h2 class="phase-card-title">Фаза 4: Чек-лист действий и ответ клиенту</h2>
-          <p class="phase-card-desc">Сформируйте финальный чек-лист действий, комментарий в тикет и текст сообщения клиенту на основе инструкций.</p>
+          <h2 class="phase-card-title">Фаза 4: Чек-лист исполнения и карточки действий</h2>
+          <p class="phase-card-desc">Отмечайте выполненные пункты по мере решения вопроса. Для каждого действия доступна раскрывающаяся плашка с деталями (текст ответа клиенту по Tone of Voice, скрипт звонка, номер CTASK).</p>
         </div>
       </div>
     </div>
 
-    <div class="fieldlabel">Страницы инструкций Loyalty (кэш operator-data)</div>
-    <div class="pages-list" id="pages-list"></div>
-    <p><button class="next small pri" id="build-prompt" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-clip"/></svg>Собрать промт step003 и скопировать</button> <span class="hint" id="prompt4-state" role="status"></span></p>
-    <details class="inner" id="helper4"><summary>Показать текст промта</summary><pre id="prompt4-text"></pre></details>
-    <label style="margin-top:14px">Итоговый ответ DeepSeek
-      <textarea id="answer4" placeholder="ЧЕКЛИСТ:&#10;СООБЩЕНИЕ:&#10;КОММЕНТАРИЙ:"></textarea>
-    </label>
-    <button class="next" id="parse4" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>Разобрать ответ</button>
-    <p class="hint msg" id="parse4-msg" role="status"></p>
+    <!-- Помощник DeepSeek: сборка промта в аккордеоне -->
+    <details class="helper" id="helper4" open>
+      <summary><svg class="ds" aria-hidden="true" focusable="false"><use href="assets/icons.svg#ic-deepseek"/></svg><span>Помощник DeepSeek: сформировать решение и тексты</span></summary>
+      <div class="body">
+        <div class="fieldlabel" style="font-weight:600;font-size:13px;margin-bottom:6px;">Страницы инструкций Loyalty (кэш operator-data)</div>
+        <div class="pages-list" id="pages-list"></div>
+        <div style="margin:12px 0 8px;">
+          <button class="next small pri" id="build-prompt" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-clip"/></svg>Собрать промт step003 и скопировать</button>
+          <span class="hint" id="prompt4-state" role="status"></span>
+          <div class="hint" style="margin-top:5px;font-size:12px;color:var(--soft);">Вставь в чат DeepSeek и отвечай на его вопросы. В конце вставь итоговый блок обратно сюда.</div>
+        </div>
+        <details class="inner"><summary>Показать собранный текст промта</summary><pre id="prompt4-text"></pre></details>
+        <label style="margin-top:14px;font-weight:600;">Итоговый ответ DeepSeek
+          <textarea id="answer4" placeholder="ИТОГ:&#10;ДЕЙСТВИЯ:&#10;- chat | Ответить клиенту | текст сообщения...&#10;СООБЩЕНИЕ:&#10;...&#10;КОММЕНТАРИЙ:&#10;...&#10;КЕЙС:&#10;problem: ..."></textarea>
+        </label>
+        <button class="next pri" id="parse4" type="button" style="margin-top:10px;"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>Разобрать ответ</button>
+        <p class="hint msg" id="parse4-msg" role="status"></p>
+      </div>
+    </details>
 
-    <div class="fields" style="margin-top:16px">
-      <div class="outbox">
-        <label>Чеклист
-          <textarea id="out-check"></textarea>
-        </label>
-        <button class="next small cp" data-for="out-check" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-copy"/></svg><span>Копировать</span></button>
+    <!-- Основной интерактивный блок: Чек-лист исполнения (карточки действий) -->
+    <div class="form-block" id="execution-checklist-block" style="padding:18px 20px;">
+      <div class="form-block-head" style="margin-bottom:12px;">
+        <h3 class="form-block-title">
+          <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>
+          Чек-лист исполнения (карточки действий)
+        </h3>
+        <span class="form-block-badge" id="checklist-progress-badge">Выполнено 0 из 5</span>
       </div>
-      <div class="outbox">
-        <label>Сообщение клиенту (Tone of Voice Loyalty)
-          <textarea id="out-reply"></textarea>
-        </label>
-        <button class="next small cp" data-for="out-reply" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-copy"/></svg><span>Копировать</span></button>
+      <p class="hint" style="margin:0 0 14px;">Отмечайте пункты слева по мере их фактического решения в CRM. Раскрывайте «Детали ▾» для работы с текстами и параметрами действий.</p>
+
+      <!-- Динамический список карточек действий -->
+      <div class="action-cards-list" id="action-cards-list"></div>
+
+      <!-- Добавление нового действия -->
+      <div class="add-action-box" style="margin-top:16px;padding-top:14px;border-top:1px dashed var(--line);display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input type="text" id="new-action-title" placeholder="Добавить новый пункт чек-листа…" autocomplete="off" style="flex:1;min-width:200px;margin-top:0;">
+        <select id="new-action-type" style="margin-top:0;font-size:13px;padding:9px 10px;">
+          <option value="chat">💬 Чат с клиентом</option>
+          <option value="compensation">🎁 Баллы / компенсация</option>
+          <option value="ctask">↗ Задача / CTASK</option>
+          <option value="themes">🏷️ Темы WebCRM</option>
+          <option value="service">📋 Служебное действие</option>
+        </select>
+        <button class="next small" id="btn-add-action" type="button">
+          <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-plus"/></svg>
+          + Добавить действие
+        </button>
+        <button class="next small" id="btn-reset-actions" type="button" title="Восстановить исходные 5 действий по умолчанию" style="color:var(--soft);">
+          <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-reset"/></svg>
+          Восстановить 5 действий
+        </button>
       </div>
-      <div class="outbox">
-        <label>Комментарий в тикет WebCRM
-          <textarea id="out-comment"></textarea>
-        </label>
-        <button class="next small cp" data-for="out-comment" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-copy"/></svg><span>Копировать</span></button>
-      </div>
-      <p class="hint er" id="ph-note" role="status"></p>
     </div>
+
+    <!-- Скрытые синхронизируемые поля для совместимости со сборщиком кейса -->
+    <textarea id="out-check" hidden></textarea>
+    <textarea id="out-reply" hidden></textarea>
+    <textarea id="out-comment" hidden></textarea>
+    <p class="hint er" id="ph-note" role="status" style="display:none;"></p>
 
     <div class="actions">
       <button class="next pri" id="next-4" type="button" style="width:100%;justify-content:center;padding:14px 20px;font-size:15px;background:#1668e3;">
@@ -487,6 +529,9 @@
     <div class="fields">
       <label for="case-title">Ёмкий заголовок кейса
         <input type="text" id="case-title" placeholder="Краткая суть: например, «Задержка экспресс-доставки: компенсация баллами без возврата»" autocomplete="off">
+      </label>
+      <label for="case-summary">Краткое резюме для сопоставления кейсов (matching)
+        <textarea id="case-summary" rows="2" placeholder="1-2 предложения: суть ситуации и итоговое согласованное решение (заполняется автоматически из DeepSeek или вручную)..."></textarea>
       </label>
       <label for="what-worked">Что сработало (или что сделали бы иначе)
         <textarea id="what-worked" placeholder="Например: помогло сразу сослаться на пункт 3 Памятки и предложить компенсацию..."></textarea>

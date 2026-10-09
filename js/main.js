@@ -9,7 +9,7 @@ import { connSummary, initConnection } from "./github.js";
 import { initStep1, loadPrompt, updateClientUrlMsg, currentLocalDatetime, updateHelperVisibility, renderVerdict } from "./steps/step1.js";
 import { initStep2, renderThemes, renderSummary } from "./steps/step2.js";
 import { initStep3 } from "./steps/step3.js";
-import { initStep4, updPh } from "./steps/step4.js";
+import { initStep4, updPh, getDefaultActions, renderActionCards, syncChecklistOut } from "./steps/step4.js";
 import { initStep5, renderPreview } from "./steps/step5.js";
 import { initCaseLoader } from "./case-loader.js";
 
@@ -44,6 +44,8 @@ export function resetClaimForm() {
 
   state.current = 1;
   state.themes = [];
+  state.actions = getDefaultActions();
+  state.caseMatch = null;
   state.caseSaved = false;
   state.loadedCase = null;
 
@@ -52,14 +54,21 @@ export function resetClaimForm() {
     const el = $(id); if (el) el.textContent = "";
   });
 
+  // Все аккордеоны-помощники DeepSeek на всех шагах открываем по умолчанию
+  ["helper", "helper2", "helper4"].forEach(id => {
+    const el = $(id);
+    if (el) el.open = true;
+  });
+
   const saveMsg = $("save-case-msg");
   if (saveMsg) { saveMsg.textContent = ""; saveMsg.className = "hint msg"; }
 
   try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
   save();
 
-  updateHelperVisibility();
   renderThemes();
+  renderActionCards();
+  syncChecklistOut();
   renderSummary();
   renderVerdict();
   updPh();

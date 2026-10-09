@@ -179,12 +179,17 @@ async function loadRules() {
 }
 
 /* ---------- Выбранные темы ---------- */
-function addTheme(path, status, note) {
+function addTheme(path, status = "добавлю я", note = "") {
   const hit = TYPE_MAP[norm(path)];
   const p = hit ? hit.path : path;
+  const normalizedStatus = (status && /тикет/i.test(status)) ? "в тикете" : "добавлю я";
   const ex = state.themes.find(t => norm(t.path) === norm(p));
-  if (ex) { if (note && !ex.note) ex.note = note; return; }
-  state.themes.push({ path: p, status, note: note || "", unknown: TYPES.length > 0 && !hit });
+  if (ex) {
+    if (note && !ex.note) ex.note = note;
+    if (status) ex.status = normalizedStatus;
+    return;
+  }
+  state.themes.push({ path: p, status: normalizedStatus, note: note || "", unknown: TYPES.length > 0 && !hit });
 }
 /* ---------- Архив кейсов и похожие решения ---------- */
 let manifestCases = [];
@@ -432,9 +437,64 @@ export function getSimilarDigestForDeepSeek() {
 
 export function renderThemes() {
   const ul = $("theme-list");
+  if (!ul) return;
   ul.innerHTML = "";
+
+  const countBadge = $("theme-counter-badge");
+  if (countBadge) {
+    countBadge.textContent = state.themes.length === 0 ? "Тем: 0" : `Тем выбрано: ${state.themes.length}`;
+    countBadge.classList.toggle("has-themes", state.themes.length > 0);
+  }
+
   state.themes.forEach((t, i) => {
     const li = document.createElement("li");
+
+    // Номер в кружочке перед каждой предложенной темой
+    const numBadge = document.createElement("span");
+    numBadge.className = "theme-num-badge";
+    numBadge.textContent = String(i + 1);
+    numBadge.setAttribute("aria-label", `Тема №${i + 1}`);
+
+    // Кнопки перемещения темы выше/ниже
+    const reorderBox = document.createElement("div");
+    reorderBox.className = "theme-reorder-btns";
+
+    const upBtn = document.createElement("button");
+    upBtn.type = "button";
+    upBtn.className = "theme-move-btn";
+    upBtn.textContent = "▲";
+    upBtn.title = "Переместить тему выше";
+    upBtn.setAttribute("aria-label", "Переместить тему выше");
+    upBtn.disabled = (i === 0);
+    upBtn.addEventListener("click", () => {
+      if (i > 0) {
+        const temp = state.themes[i];
+        state.themes[i] = state.themes[i - 1];
+        state.themes[i - 1] = temp;
+        save();
+        renderThemes();
+      }
+    });
+
+    const downBtn = document.createElement("button");
+    downBtn.type = "button";
+    downBtn.className = "theme-move-btn";
+    downBtn.textContent = "▼";
+    downBtn.title = "Переместить тему ниже";
+    downBtn.setAttribute("aria-label", "Переместить тему ниже");
+    downBtn.disabled = (i === state.themes.length - 1);
+    downBtn.addEventListener("click", () => {
+      if (i < state.themes.length - 1) {
+        const temp = state.themes[i];
+        state.themes[i] = state.themes[i + 1];
+        state.themes[i + 1] = temp;
+        save();
+        renderThemes();
+      }
+    });
+
+    reorderBox.append(upBtn, downBtn);
+
     const body = document.createElement("div");
     body.className = "tbody";
     const name = document.createElement("span");
@@ -443,14 +503,37 @@ export function renderThemes() {
     if (t.note) body.append(whyPlate(t.note));
     const line = bindLine(TYPE_MAP[norm(t.path)]);
     if (line) body.append(line);
+
     const st = document.createElement("select");
-    st.add(new Option("в тикете", "в тикете")); st.add(new Option("добавляю я", "добавляю"));
-    st.value = t.status;
-    st.addEventListener("change", () => { t.status = st.value; save(); });
+    st.className = "theme-status-select";
+    st.add(new Option("в тикете", "в тикете"));
+    st.add(new Option("добавлю я", "добавлю я"));
+
+    const curStatus = (t.status && /тикет/i.test(t.status)) ? "в тикете" : "добавлю я";
+    t.status = curStatus;
+    st.value = curStatus;
+    st.classList.toggle("st-in-ticket", curStatus === "в тикете");
+    st.classList.toggle("st-to-add", curStatus === "добавлю я");
+
+    st.addEventListener("change", () => {
+      t.status = st.value;
+      st.classList.toggle("st-in-ticket", st.value === "в тикете");
+      st.classList.toggle("st-to-add", st.value === "добавлю я");
+      save();
+    });
+
     const del = document.createElement("button");
-    del.type = "button"; del.className = "x"; del.textContent = "✕"; del.setAttribute("aria-label", "Убрать тему");
-    del.addEventListener("click", () => { state.themes.splice(i, 1); save(); renderThemes(); });
-    li.append(body, st, del);
+    del.type = "button";
+    del.className = "x";
+    del.textContent = "✕";
+    del.setAttribute("aria-label", "Убрать тему");
+    del.addEventListener("click", () => {
+      state.themes.splice(i, 1);
+      save();
+      renderThemes();
+    });
+
+    li.append(numBadge, reorderBox, body, st, del);
     ul.appendChild(li);
   });
   renderSimilarCases();
@@ -472,7 +555,7 @@ export function initStep2() {
     if (!path) return;
     const hit = TYPE_MAP[norm(path)];
     if (hit && !hit.leaf) { $("theme-hint").textContent = "Выберите тему до конца: направление, категорию и тему (третий список)."; return; }
-    addTheme(path, "добавляю", "");
+    addTheme(path, "добавлю я", "");
     $("theme-manual").value = "";
     sels[0].value = ""; for (let k = 1; k < 3; k++) fillLevel(k);
     $("theme-hint").textContent = "";
@@ -486,14 +569,17 @@ export function initStep2() {
     .then(t => { prompt2Tpl = t; })
     .catch(() => {});
   const rulesBlock = () => RULES ? "ПРАВИЛА ВЫБОРА ТЕМ" + (RULES_DATE ? " (инструкция «Правила выбора тем обращений», " + RULES_DATE + ")" : "") + "\n" + RULES : "";
-  // {{ПРАВИЛА}} в шаблоне необязателен: без него правила и список тем вставляются на место {{ТИПЫ}}
+
   const buildPrompt2 = () => {
-    if (!TYPE_LINES.length) return prompt2Tpl.replace("{{ПРАВИЛА}}", "").replace("{{ТИПЫ}}", "(список тем не загружен)");
+    if (!prompt2Tpl) return "";
+    let res = prompt2Tpl;
+    if (!TYPE_LINES.length) return res.replace("{{ПРАВИЛА}}", "").replace("{{ТИПЫ}}", "(список тем не загружен)");
     const list = TYPE_LINES.join("\n");
-    if (prompt2Tpl.includes("{{ПРАВИЛА}}")) return prompt2Tpl.replace("{{ПРАВИЛА}}", rulesBlock()).replace("{{ТИПЫ}}", list);
+    if (res.includes("{{ПРАВИЛА}}")) return res.replace("{{ПРАВИЛА}}", rulesBlock()).replace("{{ТИПЫ}}", list);
     const head = "СПИСОК ТЕМ (выбирайте только из него; пишите путь целиком, как в списке; значок (DR) входит в название)\n";
-    return prompt2Tpl.replace("{{ТИПЫ}}", (RULES ? rulesBlock() + "\n\n" : "") + head + list);
+    return res.replace("{{ТИПЫ}}", (RULES ? rulesBlock() + "\n\n" : "") + head + list);
   };
+
   let ready = Promise.resolve();
   const loadAll = () => {
     ready = Promise.all([loadTypes(), loadRules(), tplReady]).then(() => {
@@ -548,9 +634,13 @@ export function initStep2() {
     let unknown = 0;
     if (res.themes) {
       res.themes.split("\n").forEach(line => {
-        const parts = line.replace(/^[-•]\s*/, "").split("|").map(x => x.trim());
+        const cleanLine = line.replace(/^[\s\-–—•*]*(\[\d+\]|\d+[.)])?\s*[-–—•*]?\s*/, "").trim();
+        const parts = cleanLine.split("|").map(x => x.trim());
         if (!parts[0]) return;
-        addTheme(parts[0], /тикет/i.test(parts[1] || "") ? "в тикете" : "добавляю", parts.slice(2).join(" | ").trim());
+        const statusRaw = (parts[1] || "").toLowerCase().trim();
+        const status = /тикет/i.test(statusRaw) ? "в тикете" : "добавлю я";
+        const note = parts.slice(2).join(" | ").trim();
+        addTheme(parts[0], status, note);
       });
       state.themes.forEach(t => { if (t.unknown) unknown++; });
       renderThemes();

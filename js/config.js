@@ -14,7 +14,7 @@ export const FIELDS = [
   "chrono", "status", "answer2",
   "c-acc", "c-orders", "c-cancels", "c-returns", "c-sum", "c-status", "client-url",
   "answer4", "out-check", "out-reply", "out-comment",
-  "case-title", "what-worked", "qc-comments"
+  "case-title", "what-worked", "qc-comments", "case-summary"
 ];
 
 // Чекбоксы (checked), которые сохраняются так же
@@ -23,6 +23,7 @@ export const CHECKS = ["k1", "k2", "l1", "l2", "l3", "l4"];
 // Справочник тем обращений лежит в приватном operator-data и читается по токену (собирает tools/build_claim_types.py)
 export const THEMES_PATH = "derived/claim-types.json";
 export const THEME_RULES_PATH = "derived/theme-rules.md";
+export const DICTIONARY_PATH = "cases/dictionary.json";
 
 // Инструкция «Памятка» (Loyalty team): основание критериев шага 3
 export const MEMO_URL = "https://customer-support-help.o3t.ru/instrukcii-vydelennyh-grupp/instrukciya-dlya-vydelennoi-gruppy-loyalty-team/problemy-i-resheniya/pamyatka";
