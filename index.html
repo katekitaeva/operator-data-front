@@ -390,23 +390,23 @@
 
       <!-- Блок похожих кейсов из архива в аккордеоне (по умолчанию свернут) -->
       <details class="similar-cases-box" id="similar-cases-details">
-        <summary style="cursor:pointer;padding:4px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-          <span style="font-weight:700;display:inline-flex;align-items:center;gap:8px;color:var(--ink);">
+        <summary class="similar-cases-summary">
+          <span class="similar-cases-summary-title">
             <svg class="i" aria-hidden="true" focusable="false" style="color:var(--ac);"><use href="assets/icons.svg#i-spark"/></svg>
             Похожие кейсы из базы (по темам обращения)
-            <span class="wip-pill">🚧 В разработке</span>
+            <span class="similar-counter-badge" id="similar-counter-badge" hidden>0 найдено</span>
           </span>
-          <button class="next small" id="copy-similar-digest" type="button" style="padding:4px 10px;font-size:12px;" title="Скопировать выжимку похожих кейсов для DeepSeek">
+          <button class="next small" id="copy-similar-digest" type="button" title="Скопировать выжимку похожих кейсов для DeepSeek">
             <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-clip"/></svg>
             Скопировать выжимку для DeepSeek
           </button>
         </summary>
-        <div style="margin-top:10px;">
-          <p class="hint" style="margin:2px 0 8px;">Короткая выдержка из manifest.json: темы, суть проблемы, вердикт и что сработало в похожих ситуациях. <i>(Блок находится в разработке и будет доработан позже)</i>.</p>
+        <div class="similar-cases-body">
+          <p class="hint" style="margin:4px 0 10px;font-size:13px;line-height:1.45;">Кейсы из базы с совпадающими темами и похожей проблемой. Нажмите на карточку, чтобы посмотреть подробности решения и опыт коллег.</p>
           <div id="similar-cases-list" class="similar-list">
             <p class="hint" style="font-style:italic;margin:6px 0;">Добавьте темы обращения выше, чтобы найти похожие кейсы из архива.</p>
           </div>
-          <span class="hint" id="similar-copy-status" role="status" style="font-size:12px;color:var(--good);display:block;margin-top:4px;"></span>
+          <span class="hint" id="similar-copy-status" role="status" style="font-size:12px;color:var(--good);display:block;margin-top:6px;"></span>
         </div>
       </details>
     </div>
@@ -612,6 +612,38 @@
       <ul class="modal-list" id="modal-case-list">
         <li class="hint" style="padding:10px;">Загрузка списка кейсов…</li>
       </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно детального просмотра кейса -->
+<div class="modal-overlay" id="case-detail-modal" hidden>
+  <div class="modal-card case-detail-modal-card" role="dialog" aria-modal="true" aria-labelledby="case-detail-title">
+    <div class="modal-head">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1;">
+        <h3 id="case-detail-title" style="margin:0;font-size:16.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Просмотр кейса</h3>
+        <span id="case-detail-badge" class="tag" style="display:none;font-size:12px;padding:2px 8px;border-radius:4px;background:var(--field);border:1px solid var(--line);font-weight:600;"></span>
+      </div>
+      <button class="modal-close-btn" id="case-detail-close" type="button" aria-label="Закрыть">×</button>
+    </div>
+    <div class="modal-body" id="case-detail-body" style="padding:18px 20px;max-height:calc(85vh - 125px);overflow-y:auto;">
+      <!-- Содержимое карточки кейса -->
+    </div>
+    <div class="modal-actions" style="display:flex;gap:10px;justify-content:space-between;align-items:center;padding:12px 20px;border-top:1px solid var(--line);background:var(--field);flex-wrap:wrap;">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="next small" id="case-detail-copy-btn" type="button" title="Скопировать структурированную карточку кейса">
+          <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-clip"/></svg>
+          Скопировать данные кейса
+        </button>
+        <span id="case-detail-copy-status" class="hint" style="margin:0;font-size:12px;color:var(--good);"></span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="reset" id="case-detail-cancel-btn" type="button">Закрыть</button>
+        <button class="next small pri" id="case-detail-load-btn" type="button" title="Загрузить этот кейс как образец в форму">
+          <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-download"/></svg>
+          Загрузить в форму
+        </button>
+      </div>
     </div>
   </div>
 </div>

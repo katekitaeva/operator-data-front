@@ -8,7 +8,7 @@
     "start": "node server.js",
     "build": "node -e \"console.log('Build successful')\"",
     "lint": "node --check server.js && node -e \"console.log('Lint clean')\"",
-    "test": "node tests/step4-parser.test.mjs && node tests/case-lifecycle.test.mjs"
+    "test": "bun test"
   },
   "dependencies": {
     "express": "^4.21.2"

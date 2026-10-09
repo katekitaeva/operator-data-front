@@ -12,6 +12,7 @@ import { initStep3 } from "./steps/step3.js";
 import { initStep4, updPh, getDefaultActions, renderActionCards, syncChecklistOut } from "./steps/step4.js";
 import { initStep5, renderPreview } from "./steps/step5.js";
 import { initCaseLoader } from "./case-loader.js";
+import { initCaseDetailModal } from "./case-detail-modal.js";
 
 initNav();
 initStep1();
@@ -20,6 +21,7 @@ initStep3();
 initStep4();
 initStep5();
 initCaseLoader();
+initCaseDetailModal();
 initConnection();
 
 // автосохранение всех полей

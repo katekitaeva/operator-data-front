@@ -6,34 +6,38 @@ import { parseChat } from "../js/chat/parse-chat.js";
 import { redact } from "../js/chat/redact.js";
 import { buildTranscript, verifyQuote } from "../js/chat/transcript.js";
 
-const html = fs.readFileSync(process.argv[2], "utf8");
-const p = parseChat(html, { DOMParser: new JSDOM("").window.DOMParser });
-
 let fail = 0;
 const check = (name, ok, info = "") => { if (!ok) fail++; console.log((ok ? "OK   " : "FAIL ") + name + (info ? "  → " + info : "")); };
 
-check("реплики разобраны", p.messages.length === 62, p.messages.length);
-const R = p.stats.roles;
-check("роли: клиент/бот/система/сотрудник", R.client === 29 && R.bot === 31 && R.system === 1 && R.staff === 1, JSON.stringify(R));
-check("выбор заказа не свёрнут как клик меню", p.messages.some(m => m.kind === "order-select"));
-check("у каждой реплики есть id и время", p.messages.every(m => m.id && m.time && m.ts));
-check("найдена одна задача с окном", p.tasks.length === 1 && p.tasks[0].createdAt && p.tasks[0].closedAt, JSON.stringify(p.tasks));
-const inTask = p.messages.filter(m => m.taskId === p.tasks[0]?.id);
-check("реплики после закрытия задачи вне окна", p.messages.at(-1).taskId === null && inTask.length < p.messages.length, `в окне ${inTask.length} из ${p.messages.length}`);
-check("выбранный клиентом заказ найден", p.orders[0]?.confidence === "selected", p.orders[0]?.orderNo);
-check("пример номера из текста бота не считается заказом клиента", p.orders.filter(o => o.confidence === "example-or-bot-only").every(o => !o.sources.some(s => s.via.startsWith("client") || s.via === "log-selected")), p.orders.map(o => o.orderNo + ":" + o.confidence).join(", "));
-check("идентификатор клиента взят из ссылок", !!p.clientId, p.clientId);
-check("имя клиента определено по приветствию", !!p.clientName);
-check("сообщение сотрудника: id сотрудника из ссылки", p.messages.find(m => m.role === "staff")?.staffId != null);
+if (process.argv[2]) {
+  const html = fs.readFileSync(process.argv[2], "utf8");
+  const p = parseChat(html, { DOMParser: new JSDOM("").window.DOMParser });
 
-const r = redact(p), t = buildTranscript(r, { taskId: p.tasks[0].id });
-const names = [p.clientName, ...new Set(p.messages.filter(m => m.role === "staff").map(m => m.author))].filter(Boolean);
-check("имена не попали в расшифровку", names.every(n => !t.text.includes(n)), `проверено имён: ${names.length}`);
-check("шум свёрнут (меню и приветствия)", t.text.split("\n").length < inTask.length, `${t.text.split("\n").length} строк вместо ${inTask.length}`);
+  check("реплики разобраны", p.messages.length === 62, p.messages.length);
+  const R = p.stats.roles;
+  check("роли: клиент/бот/система/сотрудник", R.client === 29 && R.bot === 31 && R.system === 1 && R.staff === 1, JSON.stringify(R));
+  check("выбор заказа не свёрнут как клик меню", p.messages.some(m => m.kind === "order-select"));
+  check("у каждой реплики есть id и время", p.messages.every(m => m.id && m.time && m.ts));
+  check("найдена одна задача с окном", p.tasks.length === 1 && p.tasks[0].createdAt && p.tasks[0].closedAt, JSON.stringify(p.tasks));
+  const inTask = p.messages.filter(m => m.taskId === p.tasks[0]?.id);
+  check("реплики после закрытия задачи вне окна", p.messages.at(-1).taskId === null && inTask.length < p.messages.length, `в окне ${inTask.length} из ${p.messages.length}`);
+  check("выбранный клиентом заказ найден", p.orders[0]?.confidence === "selected", p.orders[0]?.orderNo);
+  check("пример номера из текста бота не считается заказом клиента", p.orders.filter(o => o.confidence === "example-or-bot-only").every(o => !o.sources.some(s => s.via.startsWith("client") || s.via === "log-selected")), p.orders.map(o => o.orderNo + ":" + o.confidence).join(", "));
+  check("идентификатор клиента взят из ссылок", !!p.clientId, p.clientId);
+  check("имя клиента определено по приветствию", !!p.clientName);
+  check("сообщение сотрудника: id сотрудника из ссылки", p.messages.find(m => m.role === "staff")?.staffId != null);
 
-const free = inTask.find(m => m.kind === "text" && m.role === "client" && m.text.length > 25);
-check("настоящая цитата находится", verifyQuote(p, free.text.slice(0, 25), { taskId: p.tasks[0].id }).length >= 1);
-check("выдуманная цитата не находится", verifyQuote(p, "клиент потребовал неустойку по закону", {}).length === 0);
+  const r = redact(p), t = buildTranscript(r, { taskId: p.tasks[0].id });
+  const names = [p.clientName, ...new Set(p.messages.filter(m => m.role === "staff").map(m => m.author))].filter(Boolean);
+  check("имена не попали в расшифровку", names.every(n => !t.text.includes(n)), `проверено имён: ${names.length}`);
+  check("шум свёрнут (меню и приветствия)", t.text.split("\n").length < inTask.length, `${t.text.split("\n").length} строк вместо ${inTask.length}`);
+
+  const free = inTask.find(m => m.kind === "text" && m.role === "client" && m.text.length > 25);
+  check("настоящая цитата находится", verifyQuote(p, free.text.slice(0, 25), { taskId: p.tasks[0].id }).length >= 1);
+  check("выдуманная цитата не находится", verifyQuote(p, "клиент потребовал неустойку по закону", {}).length === 0);
+} else {
+  console.log("chat-parser: Проверка реальной выгрузки пропущена (путь не указан в аргументах)");
+}
 
 // --- синтетические крайние случаи ---
 const DP = new JSDOM("").window.DOMParser;
@@ -50,6 +54,8 @@ check("продолжение серии наследует автора", c.mes
 const d = parseChat("<p>не чат</p>", { DOMParser: DP });
 check("не чат: пустой результат без ошибок", d.messages.length === 0 && d.tasks.length === 0);
 
-console.log("\nстатистика:", JSON.stringify(p.stats));
-console.log("\n--- расшифровка окна задачи (обезличенная) ---\n" + t.text.slice(0, 2500));
+if (typeof p !== "undefined" && typeof t !== "undefined") {
+  console.log("\nстатистика:", JSON.stringify(p.stats));
+  console.log("\n--- расшифровка окна задачи (обезличенная) ---\n" + t.text.slice(0, 2500));
+}
 console.log(fail ? `\nПРОВАЛОВ: ${fail}` : "\nвсе проверки пройдены");

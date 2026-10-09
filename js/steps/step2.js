@@ -8,11 +8,23 @@ import { goTo, onRender } from "../nav.js";
 import { parseAnswer, LABELS2 } from "../parser.js";
 import { ghGet, conn } from "../github.js";
 import { THEMES_PATH, THEME_RULES_PATH } from "../config.js";
+import { openCaseDetailModal } from "../case-detail-modal.js";
+import { findSimilarCases, SIMILARITY_THRESHOLD, MAX_SIMILAR_CASES } from "../similarity.js";
 
 // значок (DR) при сравнении путей не учитывается: DeepSeek может его опустить
 const norm = x => x.toLowerCase().replace(/\s*\(dr\)/g, "").replace(/\s+/g, " ").trim();
 let TYPES = [], TYPE_MAP = {}, TYPE_LINES = [], SOURCE = null, RULES = "", RULES_DATE = "";
 const sels = typeof document !== "undefined" ? ["t1", "t2", "t3"].map(id => document.getElementById(id)) : [];
+
+function getSel(k) {
+  if (sels && sels[k]) return sels[k];
+  if (typeof document !== "undefined") {
+    const el = document.getElementById(["t1", "t2", "t3"][k]);
+    if (el) sels[k] = el;
+    return el;
+  }
+  return null;
+}
 
 /* ---------- Сводка шага 1 ---------- */
 export function renderSummary() {
@@ -102,11 +114,17 @@ function whyPlate(text) {
 }
 function levelList(k) {
   let list = TYPES;
-  for (let j = 0; j < k; j++) { const v = sels[j].value; if (v === "") return []; list = list[+v].children || []; }
+  for (let j = 0; j < k; j++) {
+    const s = getSel(j);
+    if (!s || s.value === "") return [];
+    list = (list[+s.value] && list[+s.value].children) || [];
+  }
   return list;
 }
 function fillLevel(k) {
-  const s = sels[k], list = levelList(k);
+  const s = getSel(k);
+  if (!s) return;
+  const list = levelList(k);
   s.innerHTML = "";
   s.add(new Option(["Тип", "Подтип", "Уточнение"][k] + "…", ""));
   list.forEach((n, i) => s.add(new Option(n.name, i)));
@@ -114,9 +132,12 @@ function fillLevel(k) {
 }
 function picked() {
   const names = []; let list = TYPES, comment = "";
-  for (const s of sels) {
-    if (s.value === "") break;
-    const n = list[+s.value]; names.push(n.name);
+  for (let k = 0; k < 3; k++) {
+    const s = getSel(k);
+    if (!s || s.value === "") break;
+    const n = list[+s.value];
+    if (!n) break;
+    names.push(n.name);
     if (n.comment) comment = n.comment;
     list = n.children || [];
   }
@@ -151,14 +172,19 @@ async function loadTypes() {
     TYPES = data.types || []; SOURCE = data.source || null;
     themesDate = (SOURCE && SOURCE.pageDate) || data.date || null;
     indexTypes(TYPES, []);
-    hint.textContent = "";
+    if (hint) hint.textContent = "";
   } catch (e) {
-    hint.textContent = connected()
-      ? "Справочник тем не загружен (" + e.message + "). Проверьте подключение к operator-data; темы можно вписывать вручную."
-      : "Справочник тем лежит в operator-data: подключитесь через шестерёнку вверху. Пока темы можно вписывать вручную.";
+    if (hint) {
+      hint.textContent = connected()
+        ? "Справочник тем не загружен (" + e.message + "). Проверьте подключение к operator-data; темы можно вписывать вручную."
+        : "Справочник тем лежит в operator-data: подключитесь через шестерёнку вверху. Пока темы можно вписывать вручную.";
+    }
   }
-  sels.forEach(s => { s.value = ""; });
-  for (let k = 0; k < 3; k++) fillLevel(k);
+  for (let k = 0; k < 3; k++) {
+    const s = getSel(k);
+    if (s) s.value = "";
+    fillLevel(k);
+  }
   renderThemeSource();
   // темы, уже добавленные раньше: сверить с загруженным справочником
   if (TYPES.length) {
@@ -215,94 +241,83 @@ export function resetManifestCache() {
   manifestLoaded = false;
 }
 
+function pluralizeCases(n) {
+  const abs = Math.abs(n) % 100;
+  const num = abs % 10;
+  if (abs > 10 && abs < 20) return "кейсов найдено";
+  if (num > 1 && num < 5) return "кейса найдено";
+  if (num === 1) return "кейс найден";
+  return "кейсов найдено";
+}
+
 export async function renderSimilarCases() {
   const container = $("similar-cases-list");
+  const counterEl = $("similar-counter-badge");
   if (!container) return;
 
-  const currentThemes = (state.themes || []).map(t => (t.path || "").toLowerCase().trim()).filter(Boolean);
-  const currentProblem = (val("problem") || "").toLowerCase().trim();
+  const currentThemes = (state.themes || []).map(t => (t.path || "").trim()).filter(Boolean);
 
   if (!connected()) {
+    if (counterEl) counterEl.hidden = true;
     container.innerHTML = '<p class="hint" style="margin:6px 0;">Подключитесь к operator-data через ⚙ вверху, чтобы видеть похожие кейсы из архива.</p>';
     return;
   }
 
   const cases = await loadManifestCases();
   if (!cases || !cases.length) {
+    if (counterEl) counterEl.hidden = true;
     container.innerHTML = '<p class="hint" style="margin:6px 0;">Архив кейсов пуст или ещё не создан в cases/manifest.json.</p>';
     return;
   }
 
   if (!currentThemes.length) {
+    if (counterEl) counterEl.hidden = true;
     container.innerHTML = '<p class="hint" style="margin:6px 0;font-style:italic;">Добавьте темы обращения выше, чтобы найти похожие кейсы из архива.</p>';
     return;
   }
 
-  const scored = [];
-  cases.forEach(c => {
-    if (state.loadedCase && state.loadedCase.file && state.loadedCase.file === c.file) return;
+  const currentTicket = val("ticket") || (state.loadedCase && state.loadedCase.ticket) || "";
+  const currentFile = (state.loadedCase && state.loadedCase.file) || "";
 
-    let score = 0;
-    const matchedThemes = [];
-    const cThemes = Array.isArray(c.themes)
-      ? c.themes.map(t => typeof t === "string" ? t : (t.path || t.name || ""))
-      : [];
+  // Единый отбор по алгоритму ТЗ §5.2 (порог 0.40, лимит 3, исключение текущего тикета/файла)
+  const similarItems = findSimilarCases(
+    { themes: currentThemes, ticket: currentTicket, file: currentFile },
+    cases,
+    { threshold: SIMILARITY_THRESHOLD, limit: MAX_SIMILAR_CASES }
+  );
 
-    cThemes.forEach(ct => {
-      const ctLower = ct.toLowerCase().trim();
-      currentThemes.forEach(cur => {
-        if (ctLower === cur) {
-          score += 10;
-          if (!matchedThemes.includes(ct)) matchedThemes.push(ct);
-        } else if (ctLower.includes(cur) || cur.includes(ctLower)) {
-          score += 5;
-          if (!matchedThemes.includes(ct)) matchedThemes.push(ct);
-        } else {
-          const seg1 = cur.split(">").pop().trim();
-          const seg2 = ctLower.split(">").pop().trim();
-          if (seg1 && seg2 && seg1 === seg2 && seg1.length > 3) {
-            score += 4;
-            if (!matchedThemes.includes(ct)) matchedThemes.push(ct);
-          }
-        }
-      });
-    });
-
-    if (currentProblem && (c.problem || (c.digest && c.digest.problem))) {
-      const probText = (c.problem || (c.digest && c.digest.problem) || "").toLowerCase();
-      const words = currentProblem.split(/\s+/).filter(w => w.length > 4);
-      let hits = 0;
-      words.forEach(w => {
-        if (probText.includes(w)) hits++;
-      });
-      if (hits > 0) score += Math.min(hits, 3);
+  if (counterEl) {
+    if (similarItems.length > 0) {
+      counterEl.textContent = `${similarItems.length} ${pluralizeCases(similarItems.length)}`;
+      counterEl.hidden = false;
+    } else {
+      counterEl.textContent = "0 найдено";
+      counterEl.hidden = false;
     }
+  }
 
-    if (score > 0) {
-      scored.push({ case: c, score, matchedThemes: matchedThemes.length ? matchedThemes : cThemes.slice(0, 2) });
-    }
-  });
-
-  scored.sort((a, b) => b.score - a.score);
-
-  if (!scored.length) {
-    container.innerHTML = '<p class="hint" style="margin:6px 0;">По выбранным темам точных совпадений в архиве пока нет.</p>';
+  if (!similarItems.length) {
+    container.innerHTML = '<p class="hint" style="margin:6px 0;">По выбранным темам совпадений в архиве с порогом сходства ≥ 40% пока нет.</p>';
     return;
   }
 
   container.innerHTML = "";
-  scored.slice(0, 4).forEach(item => {
+  similarItems.forEach(item => {
     const c = item.case;
     const cardEl = document.createElement("div");
     cardEl.className = "similar-case-card";
+    cardEl.setAttribute("tabindex", "0");
+    cardEl.setAttribute("role", "button");
+    cardEl.setAttribute("aria-label", "Открыть карточку кейса");
 
     let titleText = (c.title || "").trim();
     if (!titleText) {
       if (c.ticket) titleText = `Тикет #${c.ticket}`;
       else if (c.order) titleText = `Заказ ${c.order}`;
-      else titleText = (c.file || "Кейс").replace(".json", "");
+      else titleText = (c.file || "Кейс").replace(/\.json$/i, "");
     }
 
+    // Верхняя строка карточки
     const head = document.createElement("div");
     head.className = "similar-case-head";
     const titleSpan = document.createElement("span");
@@ -311,13 +326,36 @@ export async function renderSimilarCases() {
     head.appendChild(titleSpan);
 
     const badges = document.createElement("div");
-    badges.style.cssText = "display:flex;align-items:center;gap:6px;";
+    badges.className = "similar-case-badges";
+
+    // Бейдж релевантности на основе процента сходства
+    const pct = Math.round(item.score * 100);
+    const scoreBadge = document.createElement("span");
+    scoreBadge.className = "similar-score-badge";
+    if (item.score >= 0.70) {
+      scoreBadge.textContent = `Высокая релевантность (${pct}%)`;
+      scoreBadge.classList.add("high");
+    } else if (item.score >= 0.60) {
+      scoreBadge.textContent = `Сходство ${pct}%`;
+      scoreBadge.classList.add("high");
+    } else {
+      scoreBadge.textContent = `Сходство ${pct}%`;
+    }
+    badges.appendChild(scoreBadge);
+
     if (c.ticket) {
       const tb = document.createElement("span");
       tb.className = "tag";
       tb.style.cssText = "font-size:11.5px;padding:2px 6px;border-radius:4px;border:1px solid var(--line);background:var(--field);font-weight:600;";
       tb.textContent = `#${c.ticket}`;
       badges.appendChild(tb);
+    }
+    if (c.order) {
+      const ob = document.createElement("span");
+      ob.className = "tag";
+      ob.style.cssText = "font-size:11.5px;padding:2px 6px;border-radius:4px;border:1px solid var(--line);background:var(--field);font-weight:600;";
+      ob.textContent = `заказ ${c.order}`;
+      badges.appendChild(ob);
     }
     if (c.date) {
       const db = document.createElement("span");
@@ -329,6 +367,7 @@ export async function renderSimilarCases() {
     head.appendChild(badges);
     cardEl.appendChild(head);
 
+    // Темы обращения
     if (item.matchedThemes && item.matchedThemes.length) {
       const tDiv = document.createElement("div");
       tDiv.className = "similar-case-themes";
@@ -341,17 +380,19 @@ export async function renderSimilarCases() {
       cardEl.appendChild(tDiv);
     }
 
+    // Проблема
     const problem = (c.problem || (c.digest && c.digest.problem) || "").trim();
     if (problem) {
       const pRow = document.createElement("div");
       pRow.className = "similar-case-row";
       pRow.innerHTML = `<strong>Проблема:</strong> `;
       const pTxt = document.createElement("span");
-      pTxt.textContent = problem;
+      pTxt.textContent = problem.length > 220 ? problem.slice(0, 215) + "…" : problem;
       pRow.appendChild(pTxt);
       cardEl.appendChild(pRow);
     }
 
+    // Вердикт
     const verdict = (c.verdict || (c.digest && c.digest.verdict) || "").trim();
     if (verdict) {
       const vRow = document.createElement("div");
@@ -359,59 +400,77 @@ export async function renderSimilarCases() {
       vRow.innerHTML = `<strong>Вердикт:</strong> `;
       const vTxt = document.createElement("span");
       vTxt.style.cssText = "font-weight:600;color:var(--ac2);";
-      vTxt.textContent = verdict;
+      vTxt.textContent = verdict.length > 200 ? verdict.slice(0, 195) + "…" : verdict;
       vRow.appendChild(vTxt);
       cardEl.appendChild(vRow);
     }
 
+    // Что сработало
     const whatWorked = (c.whatWorked || (c.digest && c.digest.whatWorked) || "").trim();
     if (whatWorked) {
       const wRow = document.createElement("div");
       wRow.className = "similar-case-row worked";
       wRow.innerHTML = `<strong>Что сработало:</strong> `;
       const wTxt = document.createElement("span");
-      wTxt.textContent = whatWorked;
+      wTxt.textContent = whatWorked.length > 220 ? whatWorked.slice(0, 215) + "…" : whatWorked;
       wRow.appendChild(wTxt);
       cardEl.appendChild(wRow);
     }
+
+    // Подвал карточки с кнопкой открытия
+    const foot = document.createElement("div");
+    foot.className = "similar-case-foot";
+    const openBtn = document.createElement("button");
+    openBtn.type = "button";
+    openBtn.className = "similar-open-card-btn";
+    openBtn.innerHTML = `
+      <svg class="i" aria-hidden="true" focusable="false" style="width:14px;height:14px;"><use href="assets/icons.svg#i-spark"/></svg>
+      Открыть карточку кейса →
+    `;
+    foot.appendChild(openBtn);
+    cardEl.appendChild(foot);
+
+    // Клик по карточке или кнопке открывает модальное окно
+    cardEl.addEventListener("click", () => {
+      openCaseDetailModal(c);
+    });
+    cardEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        openCaseDetailModal(c);
+      }
+    });
 
     container.appendChild(cardEl);
   });
 }
 
 export function getSimilarDigestForDeepSeek() {
-  const currentThemes = (state.themes || []).map(t => (t.path || "").toLowerCase().trim()).filter(Boolean);
-  if (!manifestCases || !manifestCases.length) return "";
+  const currentThemes = (state.themes || []).map(t => (t.path || "").trim()).filter(Boolean);
+  if (!manifestCases || !manifestCases.length || !currentThemes.length) return "";
 
-  const scored = [];
-  manifestCases.forEach(c => {
-    if (state.loadedCase && state.loadedCase.file && state.loadedCase.file === c.file) return;
-    let score = 0;
-    const cThemes = Array.isArray(c.themes)
-      ? c.themes.map(t => typeof t === "string" ? t : (t.path || t.name || ""))
-      : [];
+  const currentTicket = val("ticket") || (state.loadedCase && state.loadedCase.ticket) || "";
+  const currentFile = (state.loadedCase && state.loadedCase.file) || "";
 
-    cThemes.forEach(ct => {
-      const ctLower = ct.toLowerCase().trim();
-      currentThemes.forEach(cur => {
-        if (ctLower === cur || ctLower.includes(cur) || cur.includes(ctLower)) score += 5;
-      });
-    });
+  // Единая функция отбора: те же кейсы, что и в интерфейсе
+  const similarItems = findSimilarCases(
+    { themes: currentThemes, ticket: currentTicket, file: currentFile },
+    manifestCases,
+    { threshold: SIMILARITY_THRESHOLD, limit: MAX_SIMILAR_CASES }
+  );
 
-    if (score > 0 || !currentThemes.length) {
-      scored.push({ case: c, score });
-    }
-  });
-
-  scored.sort((a, b) => b.score - a.score);
-  const targetCases = (scored.length ? scored.map(s => s.case) : manifestCases).slice(0, 3);
+  // Если совпадений с порогом >= 0.40 нет, возвращаем пустую строку (без отката на первые три кейса)
+  if (!similarItems.length) {
+    return "";
+  }
 
   const lines = [
     "ВЫДЕРЖКА ПОХОЖИХ КЕЙСОВ ИЗ БАЗЫ ЗНАНИЙ:",
     "Обрати внимание на то, как решались аналогичные ситуации ранее и что сработало:\n"
   ];
 
-  targetCases.forEach((c, idx) => {
+  similarItems.forEach((item, idx) => {
+    const c = item.case;
     let tTitle = (c.title || "").trim();
     if (!tTitle) {
       if (c.ticket) tTitle = `Тикет #${c.ticket}`;
@@ -423,8 +482,9 @@ export function getSimilarDigestForDeepSeek() {
     const tProblem = c.problem || (c.digest && c.digest.problem) || "";
     const tVerdict = c.verdict || (c.digest && c.digest.verdict) || "";
     const tWorked = c.whatWorked || (c.digest && c.digest.whatWorked) || "";
+    const pct = Math.round(item.score * 100);
 
-    lines.push(`[Кейс ${idx + 1}] «${tTitle}»${c.date ? ` (${c.date})` : ""}`);
+    lines.push(`[Кейс ${idx + 1}] «${tTitle}» (сходство ${pct}%)${c.date ? ` (${c.date})` : ""}`);
     if (tThemes) lines.push(`• Темы: ${tThemes}`);
     if (tProblem) lines.push(`• Суть проблемы: ${tProblem}`);
     if (tVerdict) lines.push(`• Вердикт: ${tVerdict}`);
@@ -621,7 +681,7 @@ export function initStep2() {
       const text = getSimilarDigestForDeepSeek();
       const statusEl = $("similar-copy-status");
       if (!text) {
-        if (statusEl) statusEl.textContent = "Нет данных для копирования (архив кейсов пуст).";
+        if (statusEl) statusEl.textContent = "Нет похожих кейсов с порогом сходства ≥ 40% (или архив пуст).";
         return;
       }
       const ok = await copyText(text);
@@ -629,6 +689,13 @@ export function initStep2() {
         statusEl.textContent = ok ? "Выжимка похожих кейсов скопирована для DeepSeek ✅" : "Не удалось скопировать ⚠️";
         setTimeout(() => { if (statusEl) statusEl.textContent = ""; }, 3500);
       }
+    });
+  }
+
+  const similarDetails = $("similar-cases-details");
+  if (similarDetails) {
+    similarDetails.addEventListener("toggle", () => {
+      if (similarDetails.open) renderSimilarCases();
     });
   }
 
