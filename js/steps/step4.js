@@ -223,11 +223,15 @@ export function renderActionCards() {
       const rect = card.getBoundingClientRect();
       const midY = rect.top + rect.height / 2;
       let targetIndex = index;
-      if (e.clientY >= midY && draggedIndex < index) {
-        targetIndex = index;
-      } else if (e.clientY < midY && draggedIndex > index) {
-        targetIndex = index;
+      if (e.clientY >= midY) {
+        // Если бросили в нижнюю половину карточки
+        targetIndex = draggedIndex < index ? index : index + 1;
+      } else {
+        // Если бросили в верхнюю половину карточки
+        targetIndex = draggedIndex < index ? index - 1 : index;
       }
+      if (targetIndex < 0) targetIndex = 0;
+      if (targetIndex >= state.actions.length) targetIndex = state.actions.length - 1;
 
       // Перемещение элемента в массиве
       const itemToMove = state.actions.splice(draggedIndex, 1)[0];
