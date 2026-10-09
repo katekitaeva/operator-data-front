@@ -444,7 +444,7 @@
     </div>
 
     <!-- Помощник DeepSeek: сборка промта в аккордеоне -->
-    <details class="helper" id="helper4" open>
+    <details class="helper" id="helper4">
       <summary><svg class="ds" aria-hidden="true" focusable="false"><use href="assets/icons.svg#ic-deepseek"/></svg><span>Помощник DeepSeek: сформировать решение и тексты</span></summary>
       <div class="body">
         <div class="fieldlabel" style="font-weight:600;font-size:13px;margin-bottom:6px;">Страницы инструкций Loyalty (кэш operator-data)</div>
@@ -452,11 +452,10 @@
         <div style="margin:12px 0 8px;">
           <button class="next small pri" id="build-prompt" type="button"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-clip"/></svg>Собрать промт step003 и скопировать</button>
           <span class="hint" id="prompt4-state" role="status"></span>
-          <div class="hint" style="margin-top:5px;font-size:12px;color:var(--soft);">Вставь в чат DeepSeek и отвечай на его вопросы. В конце вставь итоговый блок обратно сюда.</div>
         </div>
         <details class="inner"><summary>Показать собранный текст промта</summary><pre id="prompt4-text"></pre></details>
         <label style="margin-top:14px;font-weight:600;">Итоговый ответ DeepSeek
-          <textarea id="answer4" placeholder="ИТОГ:&#10;ДЕЙСТВИЯ:&#10;- chat | Ответить клиенту | текст сообщения...&#10;СООБЩЕНИЕ:&#10;...&#10;КОММЕНТАРИЙ:&#10;...&#10;КЕЙС:&#10;problem: ..."></textarea>
+          <textarea id="answer4" placeholder="ЧЕКЛИСТ:&#10;СООБЩЕНИЕ:&#10;КОММЕНТАРИЙ:"></textarea>
         </label>
         <button class="next pri" id="parse4" type="button" style="margin-top:10px;"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>Разобрать ответ</button>
         <p class="hint msg" id="parse4-msg" role="status"></p>
@@ -529,9 +528,6 @@
     <div class="fields">
       <label for="case-title">Ёмкий заголовок кейса
         <input type="text" id="case-title" placeholder="Краткая суть: например, «Задержка экспресс-доставки: компенсация баллами без возврата»" autocomplete="off">
-      </label>
-      <label for="case-summary">Краткое резюме для сопоставления кейсов (matching)
-        <textarea id="case-summary" rows="2" placeholder="1-2 предложения: суть ситуации и итоговое согласованное решение (заполняется автоматически из DeepSeek или вручную)..."></textarea>
       </label>
       <label for="what-worked">Что сработало (или что сделали бы иначе)
         <textarea id="what-worked" placeholder="Например: помогло сразу сослаться на пункт 3 Памятки и предложить компенсацию..."></textarea>

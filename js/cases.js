@@ -54,7 +54,6 @@ export function sanitizeCaseCard(card) {
   if (clean.whatWorked) clean.whatWorked = redactPii(clean.whatWorked);
   if (clean.qcComments) clean.qcComments = redactPii(clean.qcComments);
   if (clean.verdict) clean.verdict = redactPii(clean.verdict);
-  if (clean.summary) clean.summary = redactPii(clean.summary);
 
   if (clean.outcome) {
     clean.outcome = {
@@ -134,13 +133,6 @@ export function buildCaseCard() {
     clientContext,
     verdict: verdict(),
     actions: state.actions || null,
-    problemMatch: (state.caseMatch && state.caseMatch.problem) || null,
-    demandMatch: (state.caseMatch && state.caseMatch.demand) || null,
-    solution: (state.caseMatch && state.caseMatch.solution) || null,
-    points: (state.caseMatch && state.caseMatch.points !== undefined) ? state.caseMatch.points : null,
-    result: (state.caseMatch && state.caseMatch.result) || null,
-    reasons: (state.caseMatch && state.caseMatch.reasons) || null,
-    summary: val("case-summary").trim() || (state.caseMatch && state.caseMatch.summary) || null,
     outcome: {
       check: val("out-check").trim(),
       reply: val("out-reply").trim(),
@@ -226,22 +218,6 @@ export function loadCaseIntoForm(card, file) {
   setVal("case-title", card.title || "");
   setVal("what-worked", card.whatWorked || "");
   setVal("qc-comments", card.qcComments || "");
-  setVal("case-summary", card.summary || "");
-
-  // Восстановление совпадений по справочнику (matching)
-  if (card.problemMatch || card.demandMatch || card.solution || card.result || card.reasons || card.summary) {
-    state.caseMatch = {
-      problem: card.problemMatch || null,
-      demand: card.demandMatch || null,
-      solution: card.solution || null,
-      points: card.points !== undefined ? card.points : null,
-      result: card.result || null,
-      reasons: card.reasons || null,
-      summary: card.summary || null
-    };
-  } else {
-    state.caseMatch = null;
-  }
 
   // Шаг 3: показатели клиента и чекбоксы
   if (card.clientContext) {
