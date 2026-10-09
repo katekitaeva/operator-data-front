@@ -456,7 +456,7 @@
         </div>
         <details class="inner"><summary>Показать собранный текст промта</summary><pre id="prompt4-text"></pre></details>
         <label style="margin-top:14px;font-weight:600;">Итоговый ответ DeepSeek
-          <textarea id="answer4" placeholder="ИТОГ:&#10;ДЕЙСТВИЯ:&#10;- chat | Ответить клиенту | текст сообщения...&#10;СООБЩЕНИЕ:&#10;...&#10;КОММЕНТАРИЙ:&#10;...&#10;КЕЙС:&#10;problem: ..."></textarea>
+          <textarea id="answer4" placeholder="ИТОГ ДЛЯ ФОРМЫ&#10;РЕШЕНИЕ: 2. Индивидуальный подход без отправки товара&#10;ДЕЙСТВИЕ: ЗВОНОК&#10;ВРЕМЯ: [время звонка]&#10;СКРИПТ: Здравствуйте, это...&#10;ДЕЙСТВИЕ: ЧАТ&#10;ТЕКСТ: Здравствуйте! Мы разобрались...&#10;ДЕЙСТВИЕ: БАЛЛЫ&#10;ТИП: баллы&#10;СУММА: [N баллов]&#10;ПРИЧИНА: задержка доставки&#10;СОГЛАСОВАНИЕ: не требуется&#10;ДЕЙСТВИЕ: ЗАДАЧА&#10;КОМУ: отдел доставки&#10;ТЕКСТ: Уточнить статус...&#10;НОМЕР: [номер]&#10;ДЕЙСТВИЕ: ЗАКРЫТИЕ&#10;КОММЕНТАРИЙ:&#10;1. ПРОБЛЕМА: ...&#10;2. ТРЕБУЕТ: ...&#10;3. СДЕЛАНО: ...&#10;4. ОБОСНОВАНИЕ: ...&#10;МАТЧИНГ&#10;problemType: cancelled_by_seller&#10;blockers: seller_price_issue&#10;fault: seller&#10;demand: fulfil_order&#10;resolution: points_compensation_ip&#10;stage: waiting_profile_dept&#10;essence: Описание сути кейса...&#10;КОНЕЦ ИТОГА"></textarea>
         </label>
         <button class="next pri" id="parse4" type="button" style="margin-top:10px;"><svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>Разобрать ответ</button>
         <p class="hint msg" id="parse4-msg" role="status"></p>
@@ -481,21 +481,35 @@
       <div class="add-action-box" style="margin-top:16px;padding-top:14px;border-top:1px dashed var(--line);display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <input type="text" id="new-action-title" placeholder="Добавить новый пункт чек-листа…" autocomplete="off" style="flex:1;min-width:200px;margin-top:0;">
         <select id="new-action-type" style="margin-top:0;font-size:13px;padding:9px 10px;">
-          <option value="chat">💬 Чат с клиентом</option>
+          <option value="call">📞 Звонок клиенту</option>
+          <option value="chat">💬 Ответить в чате</option>
           <option value="compensation">🎁 Баллы / компенсация</option>
-          <option value="ctask">↗ Задача / CTASK</option>
-          <option value="themes">🏷️ Темы WebCRM</option>
-          <option value="service">📋 Служебное действие</option>
+          <option value="task">↗ Задача / CTASK</option>
+          <option value="comment">📋 Закрыть тикет с комментарием</option>
         </select>
         <button class="next small" id="btn-add-action" type="button">
           <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-plus"/></svg>
           + Добавить действие
         </button>
-        <button class="next small" id="btn-reset-actions" type="button" title="Восстановить исходные 5 действий по умолчанию" style="color:var(--soft);">
+        <button class="next small" id="btn-reset-actions" type="button" title="Восстановить базовые действия по умолчанию" style="color:var(--soft);">
           <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-reset"/></svg>
-          Восстановить 5 действий
+          Восстановить по умолчанию
         </button>
       </div>
+    </div>
+
+    <!-- Блок сопоставления кейсов (Matching) -->
+    <div class="form-block" id="matching-block" style="padding:18px 20px;margin-top:16px;">
+      <div class="form-block-head" style="margin-bottom:10px;">
+        <h3 class="form-block-title">
+          <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-spark"/></svg>
+          Для сопоставления кейсов
+        </h3>
+        <span class="form-block-badge" id="matching-version-badge">matching</span>
+      </div>
+      <p class="hint" style="margin:0 0 10px;">Данные для сопоставления кейсов (matching): ключи и значения из справочника в формате <code>ключ: значение</code>. Можно редактировать вручную.</p>
+      <textarea id="matching-text" rows="7" placeholder="problemType: ...&#10;blockers: ...&#10;fault: ...&#10;demand: ...&#10;resolution: ...&#10;stage: ...&#10;essence: ..." style="width:100%;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px;"></textarea>
+      <div id="matching-warnings" class="matching-warnings-box" style="display:none;margin-top:10px;"></div>
     </div>
 
     <!-- Скрытые синхронизируемые поля для совместимости со сборщиком кейса -->

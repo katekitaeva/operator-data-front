@@ -48,6 +48,10 @@ export function resetClaimForm() {
   state.caseMatch = null;
   state.caseSaved = false;
   state.loadedCase = null;
+  state.matchingText = "";
+  state.dictionaryVersion = null;
+  const matchWarn = $("matching-warnings");
+  if (matchWarn) matchWarn.style.display = "none";
 
   document.querySelectorAll(".invalid").forEach(el => el.classList.remove("invalid"));
   ["err-1", "err-2", "parse-msg", "parse2-msg", "parse4-msg", "theme-hint", "ph-note", "client-url-msg"].forEach(id => {

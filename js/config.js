@@ -13,7 +13,7 @@ export const FIELDS = [
   "contacts", "tasks", "helper-chat", "answer",
   "chrono", "status", "answer2",
   "c-acc", "c-orders", "c-cancels", "c-returns", "c-sum", "c-status", "client-url",
-  "answer4", "out-check", "out-reply", "out-comment",
+  "answer4", "out-check", "out-reply", "out-comment", "matching-text",
   "case-title", "what-worked", "qc-comments", "case-summary"
 ];
 

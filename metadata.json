@@ -3,5 +3,7 @@
   "description": "Инструмент для разбора претензий клиентов, работы с базой знаний и архивом кейсов поддержки.",
   "prompt": "Operator data front - инструмент разбора претензий и архив кейсов",
   "permissions": [],
-  "capabilities": []
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
