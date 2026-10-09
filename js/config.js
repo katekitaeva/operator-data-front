@@ -14,7 +14,7 @@ export const FIELDS = [
   "chrono", "status", "answer2",
   "c-acc", "c-orders", "c-cancels", "c-returns", "c-sum", "c-status", "client-url",
   "answer4", "out-check", "out-reply", "out-comment", "matching-text",
-  "case-title", "what-worked", "qc-comments", "case-summary"
+  "case-title", "what-worked", "qc-comments"
 ];
 
 // Чекбоксы (checked), которые сохраняются так же

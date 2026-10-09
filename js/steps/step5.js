@@ -41,18 +41,45 @@ export function renderPreview() {
     ["Темы", card.themes.length ? card.themes.map((t, i) => `${i + 1}. ${t.path} <strong>[${t.status}]</strong>`).join("<br>") : "не выбраны"],
     ["Суть проблемы", card.problem || "—"],
     ["Требование", card.demand || "—"],
-    ["Вердикт Памятки", card.verdict ? card.verdict.split("\n")[0] : "—"],
-    ...(card.outcome && card.outcome.check ? [["Чек-лист исполнения", card.outcome.check.replace(/\n/g, "<br>")]] : []),
-    ...(card.outcome && card.outcome.reply ? [["Ответ клиенту", card.outcome.reply.replace(/\n/g, "<br>")]] : []),
-    ...(card.outcome && card.outcome.comment ? [["Комментарий в тикет", card.outcome.comment.replace(/\n/g, "<br>")]] : []),
-    ...(card.summary ? [["Краткое резюме (matching)", card.summary]] : []),
-    ...(card.problemMatch || card.solution ? [[
-      "Сопоставление со справочником",
-      `Проблема: <strong>${card.problemMatch || "—"}</strong><br>Требование: <strong>${card.demandMatch || "—"}</strong><br>Решение: <strong>${card.solution || "—"}</strong><br>Результат: <strong>${card.result || "—"}</strong><br>Баллы: <strong>${card.points !== null ? card.points : "—"}</strong><br>Причины: <strong>${card.reasons || "—"}</strong>`
-    ]] : []),
-    ["Что сработало", card.whatWorked || "—"],
-    ["Комментарии QC", card.qcComments || "—"]
+    ["Вердикт Памятки", card.verdict ? card.verdict.split("\n")[0] : "—"]
   ];
+
+  if (Array.isArray(card.actions) && card.actions.length > 0) {
+    const totalActs = card.actions.length;
+    const doneActs = card.actions.filter(a => a.done).length;
+    const actsList = card.actions.map((a, i) => {
+      const mark = a.done ? "✅" : "⏳";
+      let extra = "";
+      if (a.type === "call" && a.time) extra = ` (${a.time})`;
+      else if (a.type === "compensation" && a.points) extra = ` (${a.points} ${a.compType || "баллов"})`;
+      else if (a.type === "task" && a.target) extra = ` (кому: ${a.target})`;
+      return `${i + 1}. ${mark} <strong>${a.title}</strong>${extra}`;
+    }).join("<br>");
+    rows.push([`Действия чеклиста (${doneActs}/${totalActs})`, actsList]);
+  } else if (card.outcome && card.outcome.check) {
+    rows.push(["Чек-лист исполнения", card.outcome.check.replace(/\n/g, "<br>")]);
+  }
+
+  if (card.outcome && card.outcome.reply) {
+    rows.push(["Ответ клиенту", card.outcome.reply.replace(/\n/g, "<br>")]);
+  }
+  if (card.outcome && card.outcome.comment) {
+    rows.push(["Комментарий в тикет", card.outcome.comment.replace(/\n/g, "<br>")]);
+  }
+
+  if (card.matching && typeof card.matching === "object" && Object.keys(card.matching).length > 0) {
+    const vBadge = card.dictionaryVersion ? ` [словарь v${card.dictionaryVersion}]` : "";
+    const mLines = Object.entries(card.matching).map(([k, v]) => `<strong>${k}</strong>: ${v}`).join("<br>");
+    rows.push([`Сопоставление кейсов (matching)${vBadge}`, mLines]);
+  } else if (card.problemMatch || card.solution) {
+    rows.push([
+      "Сопоставление со справочником (старое)",
+      `Проблема: <strong>${card.problemMatch || "—"}</strong><br>Требование: <strong>${card.demandMatch || "—"}</strong><br>Решение: <strong>${card.solution || "—"}</strong><br>Результат: <strong>${card.result || "—"}</strong><br>Баллы: <strong>${card.points !== null ? card.points : "—"}</strong><br>Причины: <strong>${card.reasons || "—"}</strong>`
+    ]);
+  }
+
+  rows.push(["Что сработало", card.whatWorked || "—"]);
+  rows.push(["Комментарии QC", card.qcComments || "—"]);
 
   rows.forEach(([k, v]) => {
     const r = document.createElement("div");
@@ -86,7 +113,7 @@ export function renderPreview() {
 export function initStep5() {
   onRender(5, renderPreview);
 
-  ["case-title", "what-worked", "qc-comments", "case-summary"].forEach(id => {
+  ["case-title", "what-worked", "qc-comments"].forEach(id => {
     const el = $(id);
     if (el) {
       el.addEventListener("input", () => {

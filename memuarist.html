@@ -400,6 +400,24 @@ async function loadCaseDetail(item) {
       </div>
     ` : ""}
 
+    ${card.actions && Array.isArray(card.actions) && card.actions.length ? `
+      <div style="margin-bottom:14px;">
+        <div class="fieldlabel">Действия чеклиста (${card.actions.filter(a => a.done).length}/${card.actions.length}):</div>
+        <div class="sumcard" style="margin:4px 0 0;font-size:13px;line-height:1.6;">
+          ${card.actions.map((a, i) => `${i + 1}. ${a.done ? "✅" : "⏳"} <strong>${a.title}</strong>`).join("<br>")}
+        </div>
+      </div>
+    ` : ""}
+
+    ${card.matching && typeof card.matching === "object" && Object.keys(card.matching).length ? `
+      <div style="margin-bottom:14px;">
+        <div class="fieldlabel">Сопоставление кейсов (matching)${card.dictionaryVersion ? ` [v${card.dictionaryVersion}]` : ""}:</div>
+        <div class="sumcard" style="margin:4px 0 0;font-size:13px;line-height:1.6;">
+          ${Object.entries(card.matching).map(([k, v]) => `<strong>${k}</strong>: ${v}`).join("<br>")}
+        </div>
+      </div>
+    ` : ""}
+
     ${themeVer}
 
     <details class="inner" style="margin-top:16px;">

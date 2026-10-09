@@ -6,6 +6,33 @@ import { parseClientUrl, savedOrigin, updateCrmBar } from "./crm.js";
 import { verdict } from "./steps/step1.js";
 import { getThemesVersion } from "./steps/step2.js";
 import { ghPut } from "./github.js";
+import { getDefaultActions, syncChecklistOut } from "./steps/step4.js";
+
+/** Парсинг текста блока сопоставления в структурированный JSON-объект */
+export function parseMatchingTextToObject(text) {
+  if (!text || typeof text !== "string") return null;
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const obj = {};
+  for (const line of lines) {
+    const m = line.match(/^([a-zA-Z0-9_]+)\s*[:：]\s*(.*)$/);
+    if (m) {
+      obj[m[1].trim()] = m[2].trim();
+    }
+  }
+  return Object.keys(obj).length > 0 ? obj : null;
+}
+
+/** Форматирование объекта сопоставления обратно в текст для поля формы */
+export function formatMatchingObjectToText(obj) {
+  if (!obj || typeof obj !== "object") return "";
+  const lines = [];
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== undefined && v !== null && v !== "") {
+      lines.push(`${k}: ${v}`);
+    }
+  }
+  return lines.join("\n");
+}
 
 /** Обезличивание текста: удаление телефонов, email, паспортных данных и явных ФИО */
 export function redactPii(text) {
@@ -30,7 +57,7 @@ export function redactPii(text) {
   s = s.replace(/\b\d{4}\s+\d{6}\b/g, "[паспорт]");
 
   // Явные упоминания ФИО после слов "клиент", "ФИО", "покупатель", "пользователь"
-  s = s.replace(/(?:клиент(?:ка)?|ФИО|покупател[ья]|пользовател[ья])\s+([А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+){1,2})/gu, (m, name) => {
+  s = s.replace(/(?:[Кк]лиент(?:ка)?|[Фф][Ии][Оо]|[Пп]окупател[ья]|[Пп]ользовател[ья])\s+([А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+){1,2})/gu, (m, name) => {
     return m.replace(name, "[ФИО]");
   });
 
@@ -69,6 +96,31 @@ export function sanitizeCaseCard(card) {
       ...t,
       note: redactPii(t.note || "")
     }));
+  }
+
+  if (Array.isArray(clean.actions)) {
+    clean.actions = clean.actions.map(a => {
+      const act = { ...a };
+      if (act.title) act.title = redactPii(act.title);
+      if (act.script) act.script = redactPii(act.script);
+      if (act.text) act.text = redactPii(act.text);
+      if (act.points && typeof act.points === "string") act.points = redactPii(act.points);
+      if (act.reason) act.reason = redactPii(act.reason);
+      if (act.approval) act.approval = redactPii(act.approval);
+      if (act.target) act.target = redactPii(act.target);
+      if (act.taskNo) act.taskNo = redactPii(act.taskNo);
+      if (act.commentText) act.commentText = redactPii(act.commentText);
+      if (act.customText) act.customText = redactPii(act.customText);
+      return act;
+    });
+  }
+
+  if (clean.matching && typeof clean.matching === "object") {
+    const cleanMatching = {};
+    for (const [k, v] of Object.entries(clean.matching)) {
+      cleanMatching[k] = typeof v === "string" ? redactPii(v) : v;
+    }
+    clean.matching = cleanMatching;
   }
 
   return clean;
@@ -112,6 +164,9 @@ export function buildCaseCard() {
     }
   };
 
+  const matchingText = (val("matching-text") || state.matchingText || "").trim();
+  const matchingObj = parseMatchingTextToObject(matchingText);
+
   const card = {
     id: (state.loadedCase && state.loadedCase.id) || ticket || order || ("case_" + Date.now()),
     title: val("case-title").trim(),
@@ -122,25 +177,21 @@ export function buildCaseCard() {
     ticket,
     order,
     clientId,
+    clientUrl: val("client-url").trim() || null,
     themes,
     problem: val("problem").trim(),
     demand: val("demand").trim(),
     demandChanged: val("changed").trim() || null,
     legal: val("legal").trim() || null,
-    contacts: val("contacts").trim(),
-    tasks: val("tasks").trim(),
-    chrono: val("chrono").trim(),
-    status: val("status").trim(),
+    contacts: val("contacts").trim() || null,
+    tasks: val("tasks").trim() || null,
+    chrono: val("chrono").trim() || null,
+    status: val("status").trim() || null,
     clientContext,
     verdict: verdict(),
-    actions: state.actions || null,
-    problemMatch: (state.caseMatch && state.caseMatch.problem) || null,
-    demandMatch: (state.caseMatch && state.caseMatch.demand) || null,
-    solution: (state.caseMatch && state.caseMatch.solution) || null,
-    points: (state.caseMatch && state.caseMatch.points !== undefined) ? state.caseMatch.points : null,
-    result: (state.caseMatch && state.caseMatch.result) || null,
-    reasons: (state.caseMatch && state.caseMatch.reasons) || null,
-    summary: val("case-summary").trim() || (state.caseMatch && state.caseMatch.summary) || null,
+    actions: Array.isArray(state.actions) ? JSON.parse(JSON.stringify(state.actions)) : null,
+    matching: matchingObj,
+    dictionaryVersion: state.dictionaryVersion || null,
     outcome: {
       check: val("out-check").trim(),
       reply: val("out-reply").trim(),
@@ -151,6 +202,17 @@ export function buildCaseCard() {
     themesVersion: getThemesVersion(),
     isUpdated: !!state.loadedCase
   };
+
+  // Сохраняем поля старого сопоставления при наличии для совместимости со старыми записями
+  if (state.caseMatch) {
+    if (state.caseMatch.problem) card.problemMatch = state.caseMatch.problem;
+    if (state.caseMatch.demand) card.demandMatch = state.caseMatch.demand;
+    if (state.caseMatch.solution) card.solution = state.caseMatch.solution;
+    if (state.caseMatch.points !== undefined && state.caseMatch.points !== null) card.points = state.caseMatch.points;
+    if (state.caseMatch.result) card.result = state.caseMatch.result;
+    if (state.caseMatch.reasons) card.reasons = state.caseMatch.reasons;
+    if (state.caseMatch.summary) card.summary = state.caseMatch.summary;
+  }
 
   return sanitizeCaseCard(card);
 }
@@ -211,37 +273,9 @@ export function loadCaseIntoForm(card, file) {
   setVal("contacts", card.contacts || "");
   setVal("tasks", card.tasks || "");
 
-  // Шаг 2
+  // Шаг 2: хронология, статус
   setVal("chrono", card.chrono || "");
   setVal("status", card.status || "");
-
-  // Шаг 4
-  if (card.outcome) {
-    setVal("out-check", card.outcome.check || "");
-    setVal("out-reply", card.outcome.reply || "");
-    setVal("out-comment", card.outcome.comment || "");
-  }
-
-  // Шаг 5
-  setVal("case-title", card.title || "");
-  setVal("what-worked", card.whatWorked || "");
-  setVal("qc-comments", card.qcComments || "");
-  setVal("case-summary", card.summary || "");
-
-  // Восстановление совпадений по справочнику (matching)
-  if (card.problemMatch || card.demandMatch || card.solution || card.result || card.reasons || card.summary) {
-    state.caseMatch = {
-      problem: card.problemMatch || null,
-      demand: card.demandMatch || null,
-      solution: card.solution || null,
-      points: card.points !== undefined ? card.points : null,
-      result: card.result || null,
-      reasons: card.reasons || null,
-      summary: card.summary || null
-    };
-  } else {
-    state.caseMatch = null;
-  }
 
   // Шаг 3: показатели клиента и чекбоксы
   if (card.clientContext) {
@@ -265,15 +299,20 @@ export function loadCaseIntoForm(card, file) {
     }
   }
 
-  // Восстановление CRM ссылки, если есть сохранённый origin или дефолтный хост
-  const origin = savedOrigin();
-  if (origin && card.clientId) {
-    const fullClientUrl = `${origin}/clients/${card.clientId}`;
-    setVal("client-url", fullClientUrl);
-    setVal("helper-client-url", fullClientUrl);
+  // Восстановление CRM ссылки
+  if (card.clientUrl) {
+    setVal("client-url", card.clientUrl);
+    setVal("helper-client-url", card.clientUrl);
+  } else {
+    const origin = savedOrigin();
+    if (origin && card.clientId) {
+      const fullClientUrl = `${origin}/clients/${card.clientId}`;
+      setVal("client-url", fullClientUrl);
+      setVal("helper-client-url", fullClientUrl);
+    }
   }
 
-  // Темы
+  // Темы в сохранённом порядке
   state.themes = (card.themes || []).map(t => {
     if (typeof t === "string") return { path: t, status: "подтверждено", note: "" };
     return {
@@ -283,10 +322,70 @@ export function loadCaseIntoForm(card, file) {
     };
   });
 
-  // Действия чеклиста
-  if (Array.isArray(card.actions)) {
-    state.actions = card.actions;
+  // Шаг 4: Действия чеклиста
+  if (Array.isArray(card.actions) && card.actions.length > 0) {
+    // Новый формат: прямое восстановление всех действий
+    state.actions = JSON.parse(JSON.stringify(card.actions));
+  } else {
+    // Старый формат (без actions):
+    // Создаём базовые действия и переносим тексты из ответа и комментария
+    const def = getDefaultActions();
+    const replyText = (card.outcome && card.outcome.reply) || "";
+    const commentText = (card.outcome && card.outcome.comment) || "";
+
+    def.forEach(a => {
+      if (a.type === "chat" && replyText) {
+        a.text = replyText;
+      } else if ((a.type === "comment" || a.type === "service") && commentText) {
+        a.commentText = commentText;
+      }
+    });
+    state.actions = def;
   }
+
+  // Скрытые поля outcome
+  if (card.outcome) {
+    setVal("out-check", card.outcome.check || "");
+    setVal("out-reply", card.outcome.reply || "");
+    setVal("out-comment", card.outcome.comment || "");
+  }
+
+  // Шаг 4: Блок сопоставления кейсов (matching)
+  if (card.matching) {
+    if (typeof card.matching === "object" && !Array.isArray(card.matching)) {
+      state.matchingText = formatMatchingObjectToText(card.matching);
+    } else if (typeof card.matching === "string") {
+      state.matchingText = card.matching;
+    } else {
+      state.matchingText = "";
+    }
+    setVal("matching-text", state.matchingText);
+    state.dictionaryVersion = card.dictionaryVersion || null;
+  } else {
+    state.matchingText = "";
+    setVal("matching-text", "");
+    state.dictionaryVersion = null;
+  }
+
+  // Сохраняем старый caseMatch для совместимости при наличии
+  if (card.problemMatch || card.demandMatch || card.solution || card.result || card.reasons || card.summary) {
+    state.caseMatch = {
+      problem: card.problemMatch || null,
+      demand: card.demandMatch || null,
+      solution: card.solution || null,
+      points: card.points !== undefined ? card.points : null,
+      result: card.result || null,
+      reasons: card.reasons || null,
+      summary: card.summary || null
+    };
+  } else {
+    state.caseMatch = null;
+  }
+
+  // Шаг 5
+  setVal("case-title", card.title || "");
+  setVal("what-worked", card.whatWorked || "");
+  setVal("qc-comments", card.qcComments || "");
 
   // Запоминаем идентификатор загруженного кейса
   state.loadedCase = {
@@ -300,6 +399,7 @@ export function loadCaseIntoForm(card, file) {
   state.caseSaved = true;
 
   updateCrmBar();
+  syncChecklistOut();
   save();
   return true;
 }

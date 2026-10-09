@@ -7,7 +7,7 @@ import { renderThemes, renderSummary } from "./steps/step2.js";
 import { renderVerdict } from "./steps/step1.js";
 import { renderPreview } from "./steps/step5.js";
 import { updateClientUrlMsg } from "./steps/step1.js";
-import { updPh } from "./steps/step4.js";
+import { updPh, syncChecklistOut } from "./steps/step4.js";
 import { render, goTo } from "./nav.js";
 
 let casesList = [];
@@ -129,6 +129,7 @@ export function initCaseLoader() {
         renderSummary();
         renderThemes();
         renderVerdict();
+        syncChecklistOut();
         updPh();
         updateClientUrlMsg();
         render();

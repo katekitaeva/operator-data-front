@@ -1,8 +1,8 @@
 // Мелкие DOM-помощники и копирование в буфер. Без знания о шагах.
 
 export const $ = id => document.getElementById(id);
-export const val = id => $(id).value.trim();
-export const num = id => { const v = $(id).value.trim(); return v === "" ? null : Number(v); };
+export const val = id => { const el = $(id); return el ? el.value.trim() : ""; };
+export const num = id => { const el = $(id); if (!el) return null; const v = el.value.trim(); return v === "" ? null : Number(v); };
 
 export async function copyText(text, icon) {
   let ok = false;
