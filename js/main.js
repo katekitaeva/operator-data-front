@@ -94,6 +94,14 @@ export function resetClaimForm() {
   render();
   goTo(1);
 
+  // Все аккордеоны-помощники DeepSeek на всех шагах гарантированно открыты
+  document.querySelectorAll("details.helper").forEach(el => {
+    el.open = true;
+  });
+  const h1 = $("helper"); if (h1) h1.open = true;
+  const h2 = $("helper2"); if (h2) h2.open = true;
+  const h4 = $("helper4"); if (h4) h4.open = true;
+
   if (typeof window.scrollTo === "function") window.scrollTo({ top: 0, behavior: "smooth" });
   const s1 = document.getElementById("step-1");
   if (s1 && typeof s1.scrollIntoView === "function") s1.scrollIntoView({ behavior: "smooth" });

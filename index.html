@@ -291,13 +291,13 @@
       </div>
 
       <!-- Блок 4: Дополнительные детали из чата -->
-      <details class="form-block inner" style="padding:14px 18px;">
+      <details class="form-block inner" id="extra-chat-details" style="padding:14px 18px;">
         <summary style="font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;color:var(--ink);">
           <svg class="i" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-clip"/></svg>
           Дополнительные детали из чата (опорное время, юр. статус, контакты, задачи)
         </summary>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;">
-          <div>
+          <div style="grid-column:1/-1;">
             <label for="case-datetime">Дата и время обращения</label>
             <div class="input-with-btn">
               <input type="datetime-local" id="case-datetime">
@@ -306,19 +306,19 @@
           </div>
           <div>
             <label for="changed">Требование менялось позже?</label>
-            <input type="text" id="changed" autocomplete="off" placeholder="нет">
+            <textarea id="changed" rows="3" placeholder="нет"></textarea>
           </div>
           <div>
             <label for="legal">Юридические упоминания</label>
-            <input type="text" id="legal" autocomplete="off" placeholder="нет">
+            <textarea id="legal" rows="3" placeholder="нет"></textarea>
           </div>
           <div>
             <label for="contacts">Контакты: кто общался с клиентом</label>
-            <textarea id="contacts" rows="2" placeholder="Оператор / специалист"></textarea>
+            <textarea id="contacts" rows="3" placeholder="Оператор / специалист"></textarea>
           </div>
-          <div style="grid-column:1/-1;">
+          <div>
             <label for="tasks">Задачи из чата</label>
-            <textarea id="tasks" rows="2" placeholder="Номера CTASK..."></textarea>
+            <textarea id="tasks" rows="3" placeholder="Номера CTASK..."></textarea>
           </div>
         </div>
       </details>

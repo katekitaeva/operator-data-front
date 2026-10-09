@@ -402,6 +402,9 @@ export function renderActionCards() {
 
     toggleBtn.addEventListener("click", () => {
       act.done = !act.done;
+      if (act.done) {
+        act.open = false; // При отметке «выполнено» детали автоматически сворачиваются
+      }
       save();
       renderActionCards();
       syncChecklistOut();
@@ -1412,16 +1415,14 @@ export function initStep4() {
   const parseBtn = $("parse4");
   if (parseBtn) {
     parseBtn.addEventListener("click", async () => {
+      // Сворачиваем аккордеон помощника DeepSeek
+      const h4 = $("helper4");
+      if (h4) h4.open = false;
+
       const ansEl = $("answer4");
       const msg = $("parse4-msg");
       if (!ansEl) return;
       const text = ansEl.value;
-
-      // Если в форме уже есть настроенные действия, запрашиваем подтверждение
-      const hasExisting = Array.isArray(state.actions) && state.actions.length > 0;
-      if (hasExisting && !confirm("Состояние шага 4 будет перезаписано. Продолжить?")) {
-        return;
-      }
 
       const parsed = parseStep4FinalResponse(text);
 
@@ -1595,7 +1596,6 @@ export function initStep4() {
       }
 
       // Сворачиваем помощника
-      const h4 = $("helper4");
       if (h4) h4.open = false;
 
       save();

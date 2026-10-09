@@ -106,7 +106,11 @@ export async function checkTicketInArchive(rawTicket) {
         parseMsg.textContent = `Кейс «${caseTitle}» успешно загружен из архива!`;
       }
     } catch (e) {
-      alert(`Ошибка при загрузке кейса: ${e.message}`);
+      const parseMsg = $("parse-msg");
+      if (parseMsg) {
+        parseMsg.className = "hint msg er";
+        parseMsg.textContent = `Ошибка при загрузке кейса: ${e.message}`;
+      }
     }
   };
 

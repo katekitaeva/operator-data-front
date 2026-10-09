@@ -1,9 +1,9 @@
 /* Формы, кнопки, подсказки, блоки «Помощник DeepSeek», копируемые значения, сводка, вердикт */
 /* формы */
-label{display:block;font-size:14px;font-weight:600;margin:0 0 14px}
-input[type=text],input[type=url],input[type=number],input[type=password],input[type=datetime-local],textarea,select{display:block;width:100%;margin-top:6px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--field);color:var(--ink);font:14px/1.45 inherit;font-family:inherit}
-input::placeholder,textarea::placeholder{color:#9db2bc;font-weight:400}
-textarea{min-height:76px;font-size:13px;resize:vertical}
+label{display:block;font-size:14px;font-weight:700;color:var(--ink);margin:0 0 14px}
+input[type=text],input[type=url],input[type=number],input[type=password],input[type=datetime-local],textarea,select{display:block;width:100%;margin-top:6px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--ink);font:14.5px/1.45 inherit;font-family:inherit;font-weight:500}
+input::placeholder,textarea::placeholder{color:#647d8c;font-weight:400}
+textarea{min-height:76px;font-size:14px;color:var(--ink);line-height:1.48;resize:vertical}
 select{width:auto;max-width:100%}
 input[type=checkbox]{width:17px;height:17px;margin:2px 0 0;accent-color:var(--ac);flex:none}
 :focus-visible{outline:2px solid var(--ac);outline-offset:2px}
@@ -43,9 +43,9 @@ a{color:var(--ac)}
 .next.small.pri{background:linear-gradient(180deg,var(--ac),var(--ac2));color:#fff;border-color:var(--ac2)}.next.small.pri:hover{filter:brightness(1.07)}
 .i{width:17px;height:17px;flex:none;display:inline-block;vertical-align:-3px}
 .btns{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:6px}.btns .next{flex:1 1 150px}
-.reset{display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid var(--line);border-radius:9px;padding:8px 14px;color:var(--soft);font:600 13.5px inherit;font-family:inherit;cursor:pointer}.reset:hover{color:var(--ac);border-color:var(--ac)}
-.hint{font-size:12.5px;color:var(--soft);margin:10px 0 0}
-p.hint.msg{padding:8px 12px;border-left:3px solid var(--ac);background:var(--field);border-radius:0 8px 8px 0;margin:10px 0;font-size:13.5px;color:var(--ink)}p.hint.msg:empty{display:none}
+.reset{display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid var(--line);border-radius:9px;padding:8px 14px;color:var(--ink);font:600 13.5px inherit;font-family:inherit;cursor:pointer}.reset:hover{color:var(--ac);border-color:var(--ac)}
+.hint{font-size:13px;color:var(--soft);margin:10px 0 0;line-height:1.45}
+p.hint.msg{padding:8px 12px;border-left:3px solid var(--ac);background:var(--field);border-radius:0 8px 8px 0;margin:10px 0;font-size:13.5px;color:var(--ink);font-weight:500}p.hint.msg:empty{display:none}
 .error{color:var(--er);font:600 13.5px inherit;font-family:inherit;margin:0 0 12px;min-height:1.2em}
 .placeholder{color:var(--soft)}
 /* блоки «Помощник DeepSeek»: тот же фон, что у информационного блока */

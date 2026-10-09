@@ -497,8 +497,27 @@ export function renderThemes() {
 
     const body = document.createElement("div");
     body.className = "tbody";
-    const name = document.createElement("span");
-    name.textContent = t.path + (t.unknown ? " ⚠️ нет в списке" : "");
+
+    const name = document.createElement("div");
+    name.className = "theme-name-wrap";
+    const rawPath = t.path || "";
+    const parts = rawPath.split(/\s*>\s*/);
+    if (parts.length >= 3) {
+      const topRow = document.createElement("div");
+      topRow.className = "theme-path-top";
+      topRow.textContent = parts.slice(0, 2).join(" > ") + " >";
+
+      const subRow = document.createElement("div");
+      subRow.className = "theme-path-sub";
+      subRow.textContent = parts.slice(2).join(" > ") + (t.unknown ? " ⚠️ нет в списке" : "");
+
+      name.append(topRow, subRow);
+    } else {
+      const singleRow = document.createElement("div");
+      singleRow.className = "theme-path-top";
+      singleRow.textContent = rawPath + (t.unknown ? " ⚠️ нет в списке" : "");
+      name.append(singleRow);
+    }
     body.append(name);
     if (t.note) body.append(whyPlate(t.note));
     const line = bindLine(TYPE_MAP[norm(t.path)]);
