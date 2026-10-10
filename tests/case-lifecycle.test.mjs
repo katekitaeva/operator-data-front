@@ -199,6 +199,31 @@ assert("actions точно восстановлен", Array.isArray(state.action
 assert("matchingText восстановлен в текстовом поле", document.getElementById("matching-text").value.includes("problemType: delivery_delay"));
 assert("state.matchingText содержит fault", state.matchingText.includes("fault: delivery_service"));
 
+console.log("\n=== ТЕСТЫ 7: Поле «Реакция клиента» и совместимость со старыми JSON ===");
+const reactionEl = document.getElementById("client-reaction");
+assert("поле client-reaction есть в разметке", !!reactionEl);
+
+// Старый кейс без clientReaction: поле очищается, ошибок нет
+reactionEl.value = "остаток от предыдущего кейса";
+const loadedOldAgain = loadCaseIntoForm(oldFormatCard, "2026-10-07_753683844.json");
+assert("старый кейс без clientReaction загружается", loadedOldAgain === true);
+assert("при загрузке старого кейса поле «Реакция клиента» пустое", reactionEl.value === "");
+
+// Сохранение значения, включая обезличивание
+reactionEl.value = "Клиент остался доволен, позвонил на +7 999 123 45 67 и поблагодарил";
+const cardWithReaction = buildCaseCard();
+assert("card.clientReaction сохранён в карточке", typeof cardWithReaction.clientReaction === "string" && cardWithReaction.clientReaction.includes("доволен"));
+assert("в clientReaction обезличен телефон", cardWithReaction.clientReaction.includes("[телефон]") && !cardWithReaction.clientReaction.includes("999"));
+
+// Повторная загрузка карточки с новым полем восстанавливает значение
+reactionEl.value = "";
+loadCaseIntoForm(cardWithReaction, "2026-10-07_753683844.json");
+assert("значение «Реакция клиента» восстанавливается из карточки", reactionEl.value.includes("доволен"));
+
+// Старый кейс без поля проходит через обезличивание без ошибок и не получает поле «из воздуха»
+const sanitizedOld = sanitizeCaseCard({ ...oldFormatCard });
+assert("sanitizeCaseCard не добавляет clientReaction старому кейсу", sanitizedOld.clientReaction === undefined);
+
 if (fails > 0) {
   console.error(`\n❌ Провалено тестов: ${fails}`);
   process.exit(1);

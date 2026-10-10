@@ -123,6 +123,13 @@ let MANIFEST = { cases: [] };
 let SELECTED_CASE = null;
 let ALL_CASES = [];
 
+// Экранирование текста перед вставкой в HTML
+function escHtml(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
 // Инициализация полей настроек CRM
 function initCrmSetting() {
   const crmInput = $("c-crm");
@@ -340,6 +347,13 @@ async function loadCaseDetail(item) {
     </div>
   ` : "";
 
+  const reactionHtml = card.clientReaction ? `
+    <div class="worked-box" style="background:rgba(217,119,6,0.08);border-left-color:var(--wr);">
+      <strong style="color:var(--wr);">💬 Реакция клиента:</strong>
+      ${escHtml(card.clientReaction)}
+    </div>
+  ` : "";
+
   const qcHtml = card.qcComments ? `
     <div class="worked-box" style="background:rgba(14,135,150,0.08);border-left-color:var(--ac);">
       <strong style="color:var(--ac);">🔍 Комментарии Quality Check:</strong>
@@ -366,6 +380,7 @@ async function loadCaseDetail(item) {
 
     ${crmBarHtml}
     ${whatWorkedHtml}
+    ${reactionHtml}
     ${qcHtml}
 
     <div style="margin-bottom:14px;">

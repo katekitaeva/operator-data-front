@@ -79,6 +79,7 @@ export function sanitizeCaseCard(card) {
   if (clean.chrono) clean.chrono = redactPii(clean.chrono);
   if (clean.status) clean.status = redactPii(clean.status);
   if (clean.whatWorked) clean.whatWorked = redactPii(clean.whatWorked);
+  if (clean.clientReaction) clean.clientReaction = redactPii(clean.clientReaction);
   if (clean.qcComments) clean.qcComments = redactPii(clean.qcComments);
   if (clean.verdict) clean.verdict = redactPii(clean.verdict);
   if (clean.summary) clean.summary = redactPii(clean.summary);
@@ -198,6 +199,7 @@ export function buildCaseCard() {
       comment: val("out-comment").trim()
     },
     whatWorked: val("what-worked").trim(),
+    clientReaction: val("client-reaction").trim(),
     qcComments: val("qc-comments").trim(),
     themesVersion: getThemesVersion(),
     isUpdated: !!state.loadedCase
@@ -385,6 +387,8 @@ export function loadCaseIntoForm(card, file) {
   // Шаг 5
   setVal("case-title", card.title || "");
   setVal("what-worked", card.whatWorked || "");
+  // Поле «Реакция клиента» появилось позже: в старых карточках его нет, тогда поле остаётся пустым
+  setVal("client-reaction", card.clientReaction || "");
   setVal("qc-comments", card.qcComments || "");
 
   // Запоминаем идентификатор загруженного кейса

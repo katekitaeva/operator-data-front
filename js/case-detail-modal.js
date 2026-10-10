@@ -297,7 +297,20 @@ function renderCaseDetailBody(c, isFull = false) {
     container.appendChild(sec);
   }
 
-  // 9. Заметки контроля качества
+  // 9. Реакция клиента (поле появилось позже, у старых кейсов его нет — блок не показывается)
+  const reaction = (c.clientReaction || "").trim();
+  if (reaction) {
+    const sec = document.createElement("div");
+    sec.className = "case-detail-sec";
+    sec.innerHTML = `<div class="case-detail-sec-title">Реакция клиента</div>`;
+    const rBox = document.createElement("div");
+    rBox.className = "case-detail-box";
+    rBox.textContent = reaction;
+    sec.appendChild(rBox);
+    container.appendChild(sec);
+  }
+
+  // 10. Заметки контроля качества
   const qc = (c.qcComments || "").trim();
   if (qc) {
     const sec = document.createElement("div");
@@ -387,6 +400,9 @@ export function formatCaseMarkdown(c) {
 
   const whatWorked = c.whatWorked || (c.digest && c.digest.whatWorked);
   if (whatWorked) lines.push(`\nЧто сработало:\n${whatWorked}`);
+
+  const reaction = (c.clientReaction || "").trim();
+  if (reaction) lines.push(`\nРеакция клиента:\n${reaction}`);
 
   if (Array.isArray(c.actions) && c.actions.length > 0) {
     lines.push(`\nДействия:`);

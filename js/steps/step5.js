@@ -79,6 +79,7 @@ export function renderPreview() {
   }
 
   rows.push(["Что сработало", card.whatWorked || "—"]);
+  rows.push(["Реакция клиента", card.clientReaction || "—"]);
   rows.push(["Комментарии QC", card.qcComments || "—"]);
 
   rows.forEach(([k, v]) => {
@@ -113,7 +114,7 @@ export function renderPreview() {
 export function initStep5() {
   onRender(5, renderPreview);
 
-  ["case-title", "what-worked", "qc-comments"].forEach(id => {
+  ["case-title", "what-worked", "client-reaction", "qc-comments"].forEach(id => {
     const el = $(id);
     if (el) {
       el.addEventListener("input", () => {
