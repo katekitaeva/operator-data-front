@@ -24,6 +24,8 @@ export async function getArchiveCases(forceReload = false) {
     return casesList;
   } catch (e) {
     console.warn("Could not load archive cases:", e);
+    // При явном открытии окна пробрасываем ошибку, чтобы оператор видел причину, а не «кейсов нет»
+    if (forceReload) throw e;
     return [];
   }
 }
@@ -59,6 +61,7 @@ export function initCaseLoader() {
   const closeModal = () => { modal.hidden = true; };
   const openModal = async () => {
     modal.hidden = false;
+    if (searchInput) searchInput.value = "";
     listEl.innerHTML = '<li class="hint" style="padding:10px;">Загружаю архив кейсов…</li>';
     const c = conn();
     if (!c || !c.token) {
